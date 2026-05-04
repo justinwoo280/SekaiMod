@@ -13,6 +13,7 @@ local.properties
 /service_account_credentials.json
 jniLibs/
 /library/libcore_build/
+/libcore/gomobile/
 .idea/deploymentTargetDropDown.xml
 /nkmr
 
