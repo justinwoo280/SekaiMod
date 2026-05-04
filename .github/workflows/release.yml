@@ -63,6 +63,12 @@ jobs:
       - name: Gradle Build
         env:
           BUILD_PLUGIN: none
+          # Authenticated GitHub API calls (assets.sh fetches latest
+          # geoip / geosite release versions). Without this the
+          # unauthenticated 60 req/h/IP limit is shared across all
+          # public Actions runners and frequently returns no tag_name,
+          # leading to a 404 on the empty-version download URL.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "sdk.dir=${ANDROID_HOME}" > local.properties
           echo "ndk.dir=${ANDROID_HOME}/ndk/25.0.8775105" >> local.properties
