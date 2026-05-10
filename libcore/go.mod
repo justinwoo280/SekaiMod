@@ -32,7 +32,7 @@ require (
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/hashicorp/yamux v0.1.2 // indirect
-	github.com/justinwoo280/sing-ewp v0.1.2 // indirect
+	github.com/justinwoo280/sing-ewp v0.2.0 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/libdns/alidns v1.0.5-libdns.v1.beta1 // indirect
