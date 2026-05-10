@@ -20,6 +20,7 @@ class EwpSettingsActivity : ProfileSettingsActivity<EwpBean>() {
     private val serverAddress = pbm.add(PreferenceBinding(Type.Text, "serverAddress"))
     private val serverPort = pbm.add(PreferenceBinding(Type.TextToInt, "serverPort"))
     private val uuid = pbm.add(PreferenceBinding(Type.Text, "uuid"))
+    private val serverStaticPubKey = pbm.add(PreferenceBinding(Type.Text, "serverStaticPubKey"))
 
     private val type = pbm.add(PreferenceBinding(Type.Text, "type"))
     private val host = pbm.add(PreferenceBinding(Type.Text, "host"))

@@ -21,6 +21,11 @@
             app:icon="@drawable/ic_baseline_person_24"
             app:key="uuid"
             app:title="@string/uuid" />
+        <EditTextPreference
+            app:icon="@drawable/ic_baseline_vpn_key_24"
+            app:key="serverStaticPubKey"
+            app:summary="EWP/v2.1: base64 X25519 server identity (leave blank for legacy v2.0)"
+            app:title="Server Static Public Key" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/transport_settings">
