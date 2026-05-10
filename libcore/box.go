@@ -90,6 +90,17 @@ func NewSingBoxInstance(config string, localTransport LocalDNSTransport) (b *Box
 	)
 	ctx = service.ContextWithDefaultRegistry(ctx)
 	service.MustRegister[platform.Interface](ctx, boxPlatformInterfaceInstance)
+	// sing-box 1.13 introduced adapter.PlatformInterface (separate from
+	// the legacy experimental/libbox/platform.Interface that NekoBox
+	// has historically registered). NetworkManager and friends look
+	// the new type up via service.FromContext, and when it's missing
+	// they fall back to opening a netlink socket — which is denied by
+	// SELinux on modern Android user-space, producing
+	// `netlink socket in Android is banned by Google` at startup.
+	// Register an adapter that bridges our existing Java-side
+	// platform interface to the new shape so the kernel takes the
+	// platform path instead.
+	service.MustRegister[adapter.PlatformInterface](ctx, newBoxPlatformInterfaceAdapter(boxPlatformInterfaceInstance.(*boxPlatformInterfaceWrapper)))
 
 	// parse options
 	var options option.Options
