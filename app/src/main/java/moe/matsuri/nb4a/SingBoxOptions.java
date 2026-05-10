@@ -1063,6 +1063,12 @@ public class SingBoxOptions {
 
         public Integer default_mark;
 
+        // sing-box 1.12 emits a deprecation warning when this is missing,
+        // sing-box 1.13 is stricter; set it to a direct DNS server tag so
+        // outbound dialers that need to resolve hostnames (EWP server,
+        // ECH HTTPS RR queries, etc.) have an explicit fallback.
+        public String default_domain_resolver;
+
     }
 
 
@@ -2313,21 +2319,19 @@ public class SingBoxOptions {
 
         public Integer mtu;
 
+        // sing-box 1.13 merged inet4_address / inet6_address into a single
+        // 'address' list (mixed v4 + v6 CIDRs in any order).
         // Generate note: Listable
-        public List<String> inet4_address;
-
-        // Generate note: Listable
-        public List<String> inet6_address;
+        public List<String> address;
 
         public Boolean auto_route;
 
         public Boolean strict_route;
 
+        // sing-box 1.13 merged inet4_route_address / inet6_route_address into
+        // a single 'route_address' list.
         // Generate note: Listable
-        public List<String> inet4_route_address;
-
-        // Generate note: Listable
-        public List<String> inet6_route_address;
+        public List<String> route_address;
 
         // Generate note: Listable
         public List<String> include_interface;
@@ -2813,21 +2817,17 @@ public class SingBoxOptions {
 
         public Integer mtu;
 
+        // sing-box 1.13: inet4_address + inet6_address -> address.
         // Generate note: Listable
-        public List<String> inet4_address;
-
-        // Generate note: Listable
-        public List<String> inet6_address;
+        public List<String> address;
 
         public Boolean auto_route;
 
         public Boolean strict_route;
 
+        // sing-box 1.13: inet4_route_address + inet6_route_address -> route_address.
         // Generate note: Listable
-        public List<String> inet4_route_address;
-
-        // Generate note: Listable
-        public List<String> inet6_route_address;
+        public List<String> route_address;
 
         // Generate note: Listable
         public List<String> include_interface;
@@ -4465,6 +4465,11 @@ public class SingBoxOptions {
         public String action;
 
         public String outbound;
+
+        // sing-box 1.13: route action 'resolve' takes a strategy field
+        // (e.g. "prefer_ipv6"). Mirrors the IP version preference that
+        // used to live on the inbound's domain_strategy.
+        public String strategy;
 
     }
 

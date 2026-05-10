@@ -208,22 +208,19 @@ fun buildConfig(
                 }
                 endpoint_independent_nat = true
                 mtu = DataStore.mtu
-                domain_strategy = genDomainStrategy(DataStore.resolveDestination)
-                sniff = needSniff
-                sniff_override_destination = needSniffOverride
-                when (ipv6Mode) {
-                    IPv6Mode.DISABLE -> {
-                        inet4_address = listOf(VpnService.PRIVATE_VLAN4_CLIENT + "/28")
-                    }
-
-                    IPv6Mode.ONLY -> {
-                        inet6_address = listOf(VpnService.PRIVATE_VLAN6_CLIENT + "/126")
-                    }
-
-                    else -> {
-                        inet4_address = listOf(VpnService.PRIVATE_VLAN4_CLIENT + "/28")
-                        inet6_address = listOf(VpnService.PRIVATE_VLAN6_CLIENT + "/126")
-                    }
+                // sing-box 1.13 removed inbound-level sniff /
+                // sniff_override_destination / domain_strategy. Those are
+                // now expressed as route rule actions; we add them once
+                // below after the inbounds block is built.
+                // sing-box 1.13 unified TUN address field — a single
+                // 'address' list takes both v4 and v6 CIDRs.
+                address = when (ipv6Mode) {
+                    IPv6Mode.DISABLE -> listOf(VpnService.PRIVATE_VLAN4_CLIENT + "/28")
+                    IPv6Mode.ONLY -> listOf(VpnService.PRIVATE_VLAN6_CLIENT + "/126")
+                    else -> listOf(
+                        VpnService.PRIVATE_VLAN4_CLIENT + "/28",
+                        VpnService.PRIVATE_VLAN6_CLIENT + "/126",
+                    )
                 }
             })
             inbounds.add(Inbound_MixedOptions().apply {
@@ -231,9 +228,8 @@ fun buildConfig(
                 tag = TAG_MIXED
                 listen = bind
                 listen_port = DataStore.mixedPort
-                domain_strategy = genDomainStrategy(DataStore.resolveDestination)
-                sniff = needSniff
-                sniff_override_destination = needSniffOverride
+                // sing-box 1.13: see TUN inbound note above — sniff /
+                // domain_strategy live in route.rules now.
             })
         }
 
@@ -244,6 +240,30 @@ fun buildConfig(
             auto_detect_interface = true
             rules = mutableListOf()
             rule_set = mutableListOf()
+            // sing-box 1.13 wants this explicitly set so outbound dialers
+            // know how to resolve hostnames (server, ECH, etc.). Point it
+            // at the direct UDP DNS we always set up below.
+            default_domain_resolver = "dns-direct"
+        }
+        // sing-box 1.13 migration: inbound-level sniff and domain_strategy
+        // were removed; the equivalent behaviour is expressed as route
+        // rule actions running before any user-supplied rule. We add a
+        // global 'sniff' (so destination domains get extracted from
+        // ClientHello / HTTP Host) and a 'resolve' (so the resolved IP
+        // strategy still honours the user's IPv6 preference).
+        if (needSniff) {
+            route.rules.add(Rule_DefaultOptions().apply {
+                action = "sniff"
+            })
+        }
+        run {
+            val resolveStrategy = genDomainStrategy(DataStore.resolveDestination)
+            if (!resolveStrategy.isNullOrEmpty()) {
+                route.rules.add(Rule_DefaultOptions().apply {
+                    action = "resolve"
+                    strategy = resolveStrategy
+                })
+            }
         }
 
         // returns outbound tag
