@@ -32,6 +32,11 @@ fun buildSingBoxOutboundEwpBean(bean: EwpBean): Outbound_EwpOptions {
         server = bean.serverAddress
         server_port = bean.serverPort
         uuid = bean.uuid
+        // EWP/v2.1 opt-in: when the server static identity is configured,
+        // sing-box will use NewClientV21 and bind the handshake KDF to it.
+        if (bean.serverStaticPubKey.isNotBlank()) {
+            server_static_public_key = bean.serverStaticPubKey
+        }
         tls = buildEwpTLS(bean)
         transport = buildEwpTransport(bean)
     }
@@ -146,6 +151,9 @@ fun EwpBean.toUri(): String {
         builder.encodedFragment(name.urlSafe())
     }
 
+    // EWP/v2.1: server static identity public key (base64 X25519).
+    if (serverStaticPubKey.isNotBlank()) builder.addQueryParameter("sk", serverStaticPubKey)
+
     if (type.isNotBlank() && type != "tcp") builder.addQueryParameter("type", type)
     if (host.isNotBlank()) builder.addQueryParameter("host", host)
     if (path.isNotBlank()) builder.addQueryParameter("path", path)
@@ -175,6 +183,9 @@ fun parseEwp(url: String): EwpBean {
         serverPort = link.port
         name = link.fragment
         uuid = link.username
+
+        // EWP/v2.1: server static identity public key (base64 X25519).
+        serverStaticPubKey = link.queryParameter("sk") ?: ""
 
         type = link.queryParameter("type") ?: "tcp"
         host = link.queryParameter("host") ?: ""

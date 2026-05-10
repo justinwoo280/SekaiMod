@@ -36,6 +36,14 @@ public class EwpBean extends AbstractBean {
 
     // --------------------------------------- core
     public String uuid;
+    /**
+     * EWP/v2.1 server static identity public key (base64-encoded
+     * 32-byte X25519 public key). When set, the client speaks
+     * EWP/v2.1 and binds the handshake KDF to this server identity
+     * (closes audit findings S1 / S2 / H2). Empty falls back to
+     * legacy v2.0 — note that v2.1 servers REJECT v2.0 handshakes.
+     */
+    public String serverStaticPubKey;
 
     // --------------------------------------- v2ray transport
     // tcp / ws / http / grpc / httpupgrade / quic
@@ -77,6 +85,7 @@ public class EwpBean extends AbstractBean {
     public void initializeDefaultValues() {
         super.initializeDefaultValues();
         if (uuid == null) uuid = "";
+        if (serverStaticPubKey == null) serverStaticPubKey = "";
         if (type == null || type.isEmpty()) type = "tcp";
         if (host == null) host = "";
         if (path == null) path = "";
@@ -108,10 +117,13 @@ public class EwpBean extends AbstractBean {
     @Override
     public void serialize(ByteBufferOutput output) {
         // Schema version - bump on field addition
-        output.writeInt(0);
+        // v0: initial layout (EWP/v2.0)
+        // v1: + serverStaticPubKey (EWP/v2.1 opt-in)
+        output.writeInt(1);
         super.serialize(output);
 
         output.writeString(uuid);
+        output.writeString(serverStaticPubKey);
 
         output.writeString(type);
         output.writeString(host);
@@ -147,6 +159,13 @@ public class EwpBean extends AbstractBean {
         super.deserialize(input);
 
         uuid = input.readString();
+        // v1+ adds the EWP/v2.1 server static identity public key.
+        // v0 profiles default to empty (= legacy v2.0 behavior).
+        if (version >= 1) {
+            serverStaticPubKey = input.readString();
+        } else {
+            serverStaticPubKey = "";
+        }
 
         type = input.readString();
         host = input.readString();

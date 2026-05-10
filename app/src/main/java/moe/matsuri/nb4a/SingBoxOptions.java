@@ -4641,6 +4641,12 @@ public class SingBoxOptions {
 
         public String uuid;
 
+        // EWP/v2.1 server static identity public key (base64 X25519).
+        // When set, client speaks v2.1 (binds handshake KDF to server
+        // identity, closes audit findings S1/S2/H2). Empty -> v2.0
+        // legacy mode (rejected by v2.1 servers).
+        public String server_static_public_key;
+
         public String network;
 
         public OutboundTLSOptions tls;
