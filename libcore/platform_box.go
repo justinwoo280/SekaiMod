@@ -13,7 +13,6 @@ import (
 
 	"github.com/matsuridayo/libneko/neko_log"
 	"github.com/sagernet/sing-box/adapter"
-	"github.com/sagernet/sing-box/common/process"
 	"github.com/sagernet/sing-box/experimental/libbox/platform"
 	sblog "github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
@@ -119,7 +118,7 @@ func (w *boxPlatformInterfaceWrapper) ClearDNSCache() {
 
 // process.Searcher
 
-func (w *boxPlatformInterfaceWrapper) FindProcessInfo(ctx context.Context, network string, source netip.AddrPort, destination netip.AddrPort) (*process.Info, error) {
+func (w *boxPlatformInterfaceWrapper) FindProcessInfo(ctx context.Context, network string, source netip.AddrPort, destination netip.AddrPort) (*adapter.ConnectionOwner, error) {
 	var uid int32
 	if useProcfs {
 		uid = procfs.ResolveSocketByProcSearch(network, source, destination)
@@ -143,7 +142,15 @@ func (w *boxPlatformInterfaceWrapper) FindProcessInfo(ctx context.Context, netwo
 		}
 	}
 	packageName, _ := intfBox.PackageNameByUid(uid)
-	return &process.Info{UserId: uid, PackageName: packageName}, nil
+	owner := &adapter.ConnectionOwner{UserId: uid}
+	if packageName != "" {
+		owner.AndroidPackageNames = []string{packageName}
+	}
+	return owner, nil
+}
+
+func (w *boxPlatformInterfaceWrapper) Close() error {
+	return nil
 }
 
 // io.Writer

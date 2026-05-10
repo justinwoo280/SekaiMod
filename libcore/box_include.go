@@ -85,7 +85,8 @@ func nekoboxAndroidOutboundRegistry() *outbound.Registry {
 	tuic.RegisterOutbound(registry)
 	hysteria2.RegisterOutbound(registry)
 
-	wireguard.RegisterOutbound(registry)
+	// NOTE: wireguard outbound was removed in sing-box 1.13;
+	// use the WireGuard endpoint registry instead if WG support is needed.
 
 	return registry
 }
