@@ -57,8 +57,8 @@ github.com/hashicorp/yamux v0.1.2 h1:XtB8kyFOyHXYVFnwT5C3+Bdo8gArse7j2AQ0DA0Uey8
 github.com/hashicorp/yamux v0.1.2/go.mod h1:C+zze2n6e/7wshOZep2A70/aQU6QBRWJO/G6FT1wIns=
 github.com/insomniacslk/dhcp v0.0.0-20260220084031-5adc3eb26f91 h1:u9i04mGE3iliBh0EFuWaKsmcwrLacqGmq1G3XoaM7gY=
 github.com/insomniacslk/dhcp v0.0.0-20260220084031-5adc3eb26f91/go.mod h1:qfvBmyDNp+/liLEYWRvqny/PEz9hGe2Dz833eXILSmo=
-github.com/justinwoo280/sing-ewp v0.1.2 h1:+Oueh/jdVHveEbbXZpLNFCAtrhpIai6sGYYzOGvgq6E=
-github.com/justinwoo280/sing-ewp v0.1.2/go.mod h1:uE/pQEesc1ZeTVFNF/N3FIIl8WOiMglAVbZHc+kCAx4=
+github.com/justinwoo280/sing-ewp v0.2.0 h1:J96fNUWl2xhQyAiOqIbSuItWrWBQIoIuU9CdrrBLXzY=
+github.com/justinwoo280/sing-ewp v0.2.0/go.mod h1:uE/pQEesc1ZeTVFNF/N3FIIl8WOiMglAVbZHc+kCAx4=
 github.com/klauspost/compress v1.18.0 h1:c/Cqfb0r+Yi+JtIEq73FWXVkRonBlf0CRNYc8Zttxdo=
 github.com/klauspost/compress v1.18.0/go.mod h1:2Pp+KzxcywXVXMr50+X0Q/Lsb43OQHYWRCY2AiWywWQ=
 github.com/klauspost/cpuid/v2 v2.3.0 h1:S4CRMLnYUhGeDFDqkGriYKdfoFlDnMtqTiI/sFzhA9Y=
