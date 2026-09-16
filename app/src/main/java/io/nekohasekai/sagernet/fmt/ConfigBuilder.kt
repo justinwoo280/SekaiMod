@@ -678,14 +678,20 @@ fun buildConfig(
             }
         }
 
-        dns.servers.add(buildDNSServer("local", "dns-local", "dns-direct", TAG_DIRECT))
+        // sing-box 1.14 DNS transport detour semantics changed:
+        // an empty detour dials directly (no outbound), while detouring
+        // to an *empty* direct outbound is now a start error
+        // ("detour to an empty direct outbound makes no sense").
+        // dns-direct/dns-local therefore carry no detour (direct dial),
+        // and dns-remote gets detour=proxy to keep the legacy behavior
+        // (legacy format used to dial via the default outbound).
+        dns.servers.add(buildDNSServer("local", "dns-local", "dns-direct"))
 
         directDNS.firstOrNull().let {
             dns.servers.add(buildDNSServer(
                 it ?: throw Exception("No direct DNS, check your settings!"),
                 "dns-direct",
-                "dns-local",
-                TAG_DIRECT
+                "dns-local"
             ))
         }
 
@@ -694,7 +700,8 @@ fun buildConfig(
             if (!forTest) dns.servers.add(buildDNSServer(
                 it ?: throw Exception("No remote DNS, check your settings!"),
                 "dns-remote",
-                "dns-direct"
+                "dns-direct",
+                TAG_PROXY
             ))
         }
 

@@ -114,6 +114,26 @@ func CheckSingBoxConfig(config string, localTransport LocalDNSTransport) error {
 	if err != nil {
 		return fmt.Errorf("create service: %v", err)
 	}
+	// Detour dialers initialize lazily on transport start, so plain
+	// construction misses errors like "detour to an empty direct outbound
+	// makes no sense" — which then only explode when the box actually
+	// starts. Start DNS transports here to surface them; skip the types
+	// that bind network resources at start.
+	dnsManager := service.FromContext[adapter.DNSTransportManager](ctx)
+	if dnsManager != nil {
+		for _, transport := range dnsManager.Transports() {
+			switch transport.Type() {
+			case "dhcp", "resolved", "mdns", "tailscale":
+				continue
+			}
+			if lifecycle, isLifecycle := transport.(adapter.Lifecycle); isLifecycle {
+				if err := lifecycle.Start(adapter.StartStateStart); err != nil {
+					instance.Close()
+					return fmt.Errorf("start dns/%s[%s]: %v", transport.Type(), transport.Tag(), err)
+				}
+			}
+		}
+	}
 	return instance.Close()
 }
 

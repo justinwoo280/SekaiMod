@@ -1,6 +1,7 @@
 package libcore
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -9,8 +10,8 @@ const testSingBox14Config = `{
   "dns": {
     "servers": [
       { "type": "local", "tag": "dns-local" },
-      { "type": "https", "tag": "dns-direct", "server": "223.5.5.5", "path": "/dns-query", "detour": "direct" },
-      { "type": "https", "tag": "dns-remote", "server": "dns.google", "path": "/dns-query", "domain_resolver": "dns-direct" },
+      { "type": "https", "tag": "dns-direct", "server": "223.5.5.5", "path": "/dns-query" },
+      { "type": "https", "tag": "dns-remote", "server": "dns.google", "path": "/dns-query", "domain_resolver": "dns-direct", "detour": "proxy" },
       { "type": "fakeip", "tag": "dns-fake", "inet4_range": "198.18.0.0/15", "inet6_range": "fc00::/18" }
     ],
     "rules": [
@@ -151,6 +152,29 @@ const testSingBox14Config = `{
 func TestCheckSingBoxConfig14(t *testing.T) {
 	if err := CheckSingBoxConfig(testSingBox14Config, nil); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// Regression test for the runtime failure where dns-direct detoured to
+// the empty "direct" outbound: the kernel rejects that at DNS transport
+// start, which plain construction does not exercise.
+func TestCheckSingBoxConfigRejectsEmptyDirectDetour(t *testing.T) {
+	config := `{
+  "dns": {
+    "servers": [
+      { "type": "https", "tag": "dns-direct", "server": "223.5.5.5", "detour": "direct" }
+    ]
+  },
+  "outbounds": [
+    { "type": "direct", "tag": "direct" }
+  ]
+}`
+	err := CheckSingBoxConfig(config, nil)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "makes no sense") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
