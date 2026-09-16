@@ -99,7 +99,8 @@ fun NaiveBean.buildNaiveConfig(port: Int): String {
             put("insecure-concurrency", insecureConcurrency)
         }
         // REALITY (NaiveProxy-REALITY fork): server_name reuses the SNI.
-        if (realityPubKey.isNotBlank()) {
+        // REALITY is TCP/TLS-only; naive+quic (H3) cannot use it.
+        if (realityPubKey.isNotBlank() && proto != "quic") {
             put("reality", JSONObject().apply {
                 put("server_name", if (sni.isNotBlank()) sni else serverAddress)
                 put("public_key", realityPubKey)

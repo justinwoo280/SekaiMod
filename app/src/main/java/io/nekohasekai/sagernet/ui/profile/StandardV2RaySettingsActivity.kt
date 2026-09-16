@@ -46,6 +46,7 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
 
     private val enableECH = pbm.add(PreferenceBinding(Type.Bool, "enableECH"))
     private val echConfig = pbm.add(PreferenceBinding(Type.Text, "echConfig"))
+    private val echQueryServerName = pbm.add(PreferenceBinding(Type.Text, "echQueryServerName"))
 
     private val enableMux = pbm.add(PreferenceBinding(Type.Bool, "enableMux"))
     private val muxPadding = pbm.add(PreferenceBinding(Type.Bool, "muxPadding"))
@@ -174,6 +175,7 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
         wsCategory.isVisible = false
         xhttpCategory.isVisible = false
         xhttpXmuxCategory.isVisible = false
+        updateCamouflageVisibility()
 
         when (network) {
             "tcp" -> {
@@ -222,8 +224,18 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
     private fun updateTls(tls: String) {
         val isTLS = "tls" in tls
         securityCategory.isVisible = isTLS
-        tlsCamouflageCategory.isVisible = isTLS
         echCategory.isVisible = isTLS
+        updateCamouflageVisibility()
+    }
+
+    // REALITY and uTLS fingerprint only make sense over TCP/TLS. QUIC-class
+    // transports (v2ray "quic") do their own TLS handshake in QUIC, where
+    // neither can apply — the kernel would reject or ignore them. Hide the
+    // whole camouflage category in that case.
+    private fun updateCamouflageVisibility() {
+        val isTLS = "tls" in security.readStringFromCache()
+        val isQuic = type.readStringFromCache() == "quic"
+        tlsCamouflageCategory.isVisible = isTLS && !isQuic
     }
 
 }

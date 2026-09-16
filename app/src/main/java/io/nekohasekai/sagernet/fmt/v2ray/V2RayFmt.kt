@@ -657,8 +657,12 @@ fun buildSingBoxOutboundTLS(bean: StandardV2RayBean): OutboundTLSOptions? {
         if (bean.sni.isNotBlank()) server_name = bean.sni
         if (bean.alpn.isNotBlank()) alpn = bean.alpn.listByLineOrComma()
         if (bean.certificates.isNotBlank()) certificate = bean.certificates
+        // REALITY and uTLS are TCP/TLS-only: QUIC-class transports (v2ray
+        // "quic") carry their own TLS inside QUIC and cannot apply either
+        // (kernel rejects/ignores them). Never emit them there.
+        val isQuicTransport = bean.type == "quic"
         var fp = bean.utlsFingerprint
-        if (bean.realityPubKey.isNotBlank()) {
+        if (!isQuicTransport && bean.realityPubKey.isNotBlank()) {
             reality = OutboundRealityOptions().apply {
                 enabled = true
                 public_key = bean.realityPubKey
@@ -666,7 +670,7 @@ fun buildSingBoxOutboundTLS(bean: StandardV2RayBean): OutboundTLSOptions? {
             }
             if (fp.isNullOrBlank()) fp = "chrome"
         }
-        if (fp.isNotBlank()) {
+        if (!isQuicTransport && fp.isNotBlank()) {
             utls = OutboundUTLSOptions().apply {
                 enabled = true
                 fingerprint = fp

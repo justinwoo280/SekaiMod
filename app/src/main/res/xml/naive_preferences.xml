@@ -61,7 +61,9 @@
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="REALITY">
+    <PreferenceCategory
+        app:key="serverRealityCategory"
+        app:title="REALITY">
         <EditTextPreference
             app:icon="@drawable/ic_baseline_vpn_key_24"
             app:key="realityPubKey"

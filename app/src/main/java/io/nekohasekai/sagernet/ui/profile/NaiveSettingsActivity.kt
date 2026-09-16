@@ -59,6 +59,16 @@ class NaiveSettingsActivity : ProfileSettingsActivity<NaiveBean>() {
         findPreference<EditTextPreference>(Key.SERVER_INSECURE_CONCURRENCY)!!.apply {
             setOnBindEditTextListener(EditTextPreferenceModifiers.Number)
         }
+
+        // REALITY only works over TCP/TLS; naive+quic (H3) cannot use it.
+        val realityCategory =
+            findPreference<androidx.preference.PreferenceCategory>("serverRealityCategory")!!
+        realityCategory.isVisible = DataStore.serverProtocol != "quic"
+        findPreference<moe.matsuri.nb4a.ui.SimpleMenuPreference>(Key.SERVER_PROTOCOL)!!
+            .setOnPreferenceChangeListener { _, newValue ->
+                realityCategory.isVisible = newValue.toString() != "quic"
+                true
+            }
     }
 
     override fun finish() {
