@@ -2,12 +2,14 @@ package libcore
 
 import (
 	"context"
+	"errors"
 	"net/netip"
 
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/experimental/libbox/platform"
 	"github.com/sagernet/sing-box/option"
 	tun "github.com/sagernet/sing-tun"
+	"github.com/sagernet/sing/common/logger"
 )
 
 // boxPlatformInterfaceAdapter bridges the existing
@@ -63,6 +65,10 @@ func (a *boxPlatformInterfaceAdapter) RequestPermissionForWIFIState() error {
 	return nil
 }
 
+func (a *boxPlatformInterfaceAdapter) ReadWIFIState(ctx context.Context) adapter.WIFIState {
+	return a.boxPlatformInterfaceWrapper.ReadWIFIState()
+}
+
 func (a *boxPlatformInterfaceAdapter) UsePlatformConnectionOwnerFinder() bool {
 	// We have a Java-side bridge (FindConnectionOwner) that uses the
 	// Android ConnectivityManager; preferable to the kernel's procfs
@@ -112,6 +118,60 @@ func (a *boxPlatformInterfaceAdapter) SendNotification(notification *adapter.Not
 		Body:       notification.Body,
 		OpenURL:    notification.OpenURL,
 	})
+}
+
+func (a *boxPlatformInterfaceAdapter) CancelNotification(identifier string, typeID int32) error {
+	return nil
+}
+
+func (a *boxPlatformInterfaceAdapter) ProcessPlatformOptions(options option.TunPlatformOptions) error {
+	return nil
+}
+
+func (a *boxPlatformInterfaceAdapter) UsePlatformDefaultInterfaceMonitor() bool {
+	return true
+}
+
+func (a *boxPlatformInterfaceAdapter) CreateDefaultInterfaceMonitor(l logger.Logger) tun.DefaultInterfaceMonitor {
+	return a.boxPlatformInterfaceWrapper.CreateDefaultInterfaceMonitor(l)
+}
+
+func (a *boxPlatformInterfaceAdapter) UsePlatformNeighborResolver() bool { return false }
+
+func (a *boxPlatformInterfaceAdapter) StartNeighborMonitor(listener adapter.NeighborUpdateListener) error {
+	return nil
+}
+
+func (a *boxPlatformInterfaceAdapter) CloseNeighborMonitor(listener adapter.NeighborUpdateListener) error {
+	return nil
+}
+
+func (a *boxPlatformInterfaceAdapter) UsePlatformShell() bool { return false }
+
+func (a *boxPlatformInterfaceAdapter) CheckPlatformShell() error { return nil }
+
+func (a *boxPlatformInterfaceAdapter) OpenShellSession(user *adapter.PlatformUser, command string, env []string, term string, rows int32, cols int32) (adapter.ShellSession, error) {
+	return nil, errors.New("platform shell unavailable")
+}
+
+func (a *boxPlatformInterfaceAdapter) LookupUser(username string) (*adapter.PlatformUser, error) {
+	return nil, errors.New("platform user lookup unavailable")
+}
+
+func (a *boxPlatformInterfaceAdapter) LookupSFTPServer() (string, error) {
+	return "", errors.New("platform SFTP unavailable")
+}
+
+func (a *boxPlatformInterfaceAdapter) ReadSystemSSHHostKey() ([]byte, error) {
+	return nil, errors.New("platform SSH host key unavailable")
+}
+
+func (a *boxPlatformInterfaceAdapter) TailscaleHostname() string { return "" }
+
+func (a *boxPlatformInterfaceAdapter) UsePlatformBridge() bool { return false }
+
+func (a *boxPlatformInterfaceAdapter) CreateBridge(options adapter.BridgeOptions) (adapter.BridgeSession, error) {
+	return nil, errors.New("platform bridge unavailable")
 }
 
 func (a *boxPlatformInterfaceAdapter) MyInterfaceAddress() []netip.Addr {

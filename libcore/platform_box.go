@@ -153,6 +153,8 @@ func (w *boxPlatformInterfaceWrapper) Close() error {
 	return nil
 }
 
+func (w *boxPlatformInterfaceWrapper) ResetCache() {}
+
 // io.Writer
 
 var disableSingBoxLog = false

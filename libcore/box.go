@@ -15,6 +15,7 @@ import (
 	"github.com/matsuridayo/libneko/protect_server"
 	"github.com/matsuridayo/libneko/speedtest"
 	"github.com/sagernet/sing-box/adapter"
+	boxCertificate "github.com/sagernet/sing-box/adapter/certificate"
 	"github.com/sagernet/sing-box/boxapi"
 	"github.com/sagernet/sing-box/experimental/libbox/platform"
 	"github.com/sagernet/sing-box/protocol/group"
@@ -79,14 +80,11 @@ type BoxInstance struct {
 	pauseManager pause.Manager
 }
 
-func NewSingBoxInstance(config string, localTransport LocalDNSTransport) (b *BoxInstance, err error) {
-	defer device.DeferPanicToError("NewSingBoxInstance", func(err_ error) { err = err_ })
-
-	// create box context
+func newBoxContext(localTransport LocalDNSTransport) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(context.Background())
 	ctx = box.Context(ctx,
 		nekoboxAndroidInboundRegistry(), nekoboxAndroidOutboundRegistry(), nekoboxAndroidEndpointRegistry(),
-		nekoboxAndroidDNSTransportRegistry(localTransport), nekoboxAndroidServiceRegistry(),
+		nekoboxAndroidDNSTransportRegistry(localTransport), nekoboxAndroidServiceRegistry(), boxCertificate.NewRegistry(),
 	)
 	ctx = service.ContextWithDefaultRegistry(ctx)
 	service.MustRegister[platform.Interface](ctx, boxPlatformInterfaceInstance)
@@ -101,11 +99,34 @@ func NewSingBoxInstance(config string, localTransport LocalDNSTransport) (b *Box
 	// platform interface to the new shape so the kernel takes the
 	// platform path instead.
 	service.MustRegister[adapter.PlatformInterface](ctx, newBoxPlatformInterfaceAdapter(boxPlatformInterfaceInstance.(*boxPlatformInterfaceWrapper)))
+	return ctx, cancel
+}
+
+func CheckSingBoxConfig(config string, localTransport LocalDNSTransport) error {
+	ctx, cancel := newBoxContext(localTransport)
+	defer cancel()
+
+	var options option.Options
+	if err := options.UnmarshalJSONContext(ctx, []byte(config)); err != nil {
+		return fmt.Errorf("decode config: %v", err)
+	}
+	instance, err := box.New(box.Options{Options: options, Context: ctx})
+	if err != nil {
+		return fmt.Errorf("create service: %v", err)
+	}
+	return instance.Close()
+}
+
+func NewSingBoxInstance(config string, localTransport LocalDNSTransport) (b *BoxInstance, err error) {
+	defer device.DeferPanicToError("NewSingBoxInstance", func(err_ error) { err = err_ })
+
+	ctx, cancel := newBoxContext(localTransport)
 
 	// parse options
 	var options option.Options
 	err = options.UnmarshalJSONContext(ctx, []byte(config))
 	if err != nil {
+		cancel()
 		return nil, fmt.Errorf("decode config: %v", err)
 	}
 
