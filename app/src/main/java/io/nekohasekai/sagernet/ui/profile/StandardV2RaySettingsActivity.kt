@@ -170,6 +170,7 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
     }
 
     private fun updateView(network: String) {
+        currentNetworkType = network
         host.preference.isVisible = false
         path.preference.isVisible = false
         wsCategory.isVisible = false
@@ -222,6 +223,7 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
     }
 
     private fun updateTls(tls: String) {
+        currentSecurityType = tls
         val isTLS = "tls" in tls
         securityCategory.isVisible = isTLS
         echCategory.isVisible = isTLS
@@ -232,10 +234,16 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
     // transports (v2ray "quic") do their own TLS handshake in QUIC, where
     // neither can apply — the kernel would reject or ignore them. Hide the
     // whole camouflage category in that case.
+    // NOTE: preference change listeners fire BEFORE the new value is
+    // persisted to the cache, so this must use the values tracked by
+    // updateView/updateTls — reading the cache here yields the previous
+    // selection and inverts the behavior.
+    private var currentNetworkType: String = "tcp"
+    private var currentSecurityType: String = ""
+
     private fun updateCamouflageVisibility() {
-        val isTLS = "tls" in security.readStringFromCache()
-        val isQuic = type.readStringFromCache() == "quic"
-        tlsCamouflageCategory.isVisible = isTLS && !isQuic
+        val isTLS = "tls" in currentSecurityType
+        tlsCamouflageCategory.isVisible = isTLS && currentNetworkType != "quic"
     }
 
 }
