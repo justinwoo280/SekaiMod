@@ -26,27 +26,19 @@ fun genReserved(anyStr: String): String {
     }
 }
 
-/**
- * Build a sing-box `wireguard` outbound JSON object.
- *
- * Compatibility note for the SekaiMod 1.13.x line:
- * sing-box 1.13 removed the legacy `wireguard` outbound type in favour
- * of the new `endpoint` model. This builder still emits the old shape
- * for backwards compatibility with the 1.12.x kernel; on a 1.13 kernel
- * the WireGuard profile will fail at config load time. Migrating this
- * to the endpoint model is tracked separately — for now WireGuard
- * profiles are effectively unsupported on the 1.13.x branch.
- */
-fun buildSingBoxOutboundWireguardBean(bean: WireGuardBean): SingBoxOptions.Outbound_WireGuardOptions {
-    return SingBoxOptions.Outbound_WireGuardOptions().apply {
+fun buildSingBoxEndpointWireguardBean(bean: WireGuardBean): SingBoxOptions.Endpoint_WireGuardOptions {
+    return SingBoxOptions.Endpoint_WireGuardOptions().apply {
         type = "wireguard"
-        server = bean.serverAddress
-        server_port = bean.serverPort
-        local_address = bean.localAddress.listByLineOrComma()
+        address = bean.localAddress.listByLineOrComma()
         private_key = bean.privateKey
-        peer_public_key = bean.peerPublicKey
-        pre_shared_key = bean.peerPreSharedKey
         mtu = bean.mtu
-        if (bean.reserved.isNotBlank()) reserved = genReserved(bean.reserved)
+        peers = listOf(SingBoxOptions.WireGuardEndpointPeer().apply {
+            address = bean.serverAddress
+            port = bean.serverPort
+            public_key = bean.peerPublicKey
+            if (bean.peerPreSharedKey.isNotBlank()) pre_shared_key = bean.peerPreSharedKey
+            allowed_ips = listOf("0.0.0.0/0", "::/0")
+            if (bean.reserved.isNotBlank()) reserved = genReserved(bean.reserved)
+        })
     }
 }

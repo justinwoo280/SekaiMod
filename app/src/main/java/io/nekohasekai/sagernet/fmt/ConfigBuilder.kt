@@ -22,7 +22,7 @@ import io.nekohasekai.sagernet.fmt.tuic.buildSingBoxOutboundTuicBean
 import io.nekohasekai.sagernet.fmt.v2ray.StandardV2RayBean
 import io.nekohasekai.sagernet.fmt.v2ray.buildSingBoxOutboundStandardV2RayBean
 import io.nekohasekai.sagernet.fmt.wireguard.WireGuardBean
-import io.nekohasekai.sagernet.fmt.wireguard.buildSingBoxOutboundWireguardBean
+import io.nekohasekai.sagernet.fmt.wireguard.buildSingBoxEndpointWireguardBean
 import io.nekohasekai.sagernet.ktx.isIpAddress
 import io.nekohasekai.sagernet.ktx.mkPort
 import io.nekohasekai.sagernet.utils.PackageCache
@@ -143,7 +143,9 @@ fun buildConfig(
     val enableDnsRouting = DataStore.enableDnsRouting
     val useFakeDns = DataStore.enableFakeDns && !forTest
     val needSniff = DataStore.trafficSniffing > 0
-    val needSniffOverride = DataStore.trafficSniffing == 2
+    // sing-box 1.13 dropped sniff_override_destination with no rule-action
+    // replacement, so the UI's "sniff-override" option (value 2) now maps to
+    // plain sniffing; UI preference entries stay unchanged.
     val externalIndexMap = ArrayList<IndexEntity>()
     val ipv6Mode = if (forTest) IPv6Mode.ENABLE else DataStore.ipv6Mode
 
@@ -179,7 +181,6 @@ fun buildConfig(
         dns = DNSOptions().apply {
             servers = mutableListOf()
             rules = mutableListOf()
-            independent_cache = true
         }
 
         fun autoDnsDomainStrategy(s: String): String? {
@@ -206,7 +207,6 @@ fun buildConfig(
                     TunImplementation.SYSTEM -> "system"
                     else -> "mixed"
                 }
-                endpoint_independent_nat = true
                 mtu = DataStore.mtu
                 // sing-box 1.13 removed inbound-level sniff /
                 // sniff_override_destination / domain_strategy. Those are
@@ -234,6 +234,7 @@ fun buildConfig(
         }
 
         outbounds = mutableListOf()
+        endpoints = mutableListOf()
 
         // init routing object
         route = RouteOptions().apply {
@@ -243,7 +244,10 @@ fun buildConfig(
             // sing-box 1.13 wants this explicitly set so outbound dialers
             // know how to resolve hostnames (server, ECH, etc.). Point it
             // at the direct UDP DNS we always set up below.
-            default_domain_resolver = "dns-direct"
+            default_domain_resolver = domainResolver(
+                "dns-direct",
+                if (forTest) null else SingBoxOptionsUtil.domainStrategy("server")
+            )
         }
         // sing-box 1.13 migration: inbound-level sniff and domain_strategy
         // were removed; the equivalent behaviour is expressed as route
@@ -293,6 +297,7 @@ fun buildConfig(
 
             profileList.forEachIndexed { index, proxyEntity ->
                 val bean = proxyEntity.requireBean()
+                var currentIsEndpoint = false
 
                 // tagOut: v2ray outbound tag for a profile
                 // profile2 (in) (global)   tag g-(id)
@@ -378,8 +383,10 @@ fun buildConfig(
                         is ShadowsocksBean ->
                             buildSingBoxOutboundShadowsocksBean(bean)
 
-                        is WireGuardBean ->
-                            buildSingBoxOutboundWireguardBean(bean)
+                        is WireGuardBean -> {
+                            currentIsEndpoint = true
+                            buildSingBoxEndpointWireguardBean(bean)
+                        }
 
                         is SSHBean ->
                             buildSingBoxOutboundSSHBean(bean)
@@ -394,7 +401,7 @@ fun buildConfig(
                     }
 
                     // internal mux
-                    if (!muxApplied) {
+                    if (!currentIsEndpoint && !muxApplied) {
                         val muxObj = proxyEntity.singMux()
                         if (muxObj != null && muxObj.enabled) {
                             muxApplied = true
@@ -406,24 +413,24 @@ fun buildConfig(
                 // internal & external
                 currentOutbound.apply {
                     // udp over tcp
-                    try {
-                        val sUoT = bean.javaClass.getField("sUoT").get(bean)
-                        if (sUoT is Boolean && sUoT) {
-                            _hack_config_map["udp_over_tcp"] = true
+                    if (!currentIsEndpoint) {
+                        try {
+                            val sUoT = bean.javaClass.getField("sUoT").get(bean)
+                            if (sUoT is Boolean && sUoT) {
+                                _hack_config_map["udp_over_tcp"] = true
+                            }
+                        } catch (_: Exception) {
                         }
-                    } catch (_: Exception) {
                     }
 
-                    // domain_strategy
+                    // route.default_domain_resolver carries the 1.14 replacement
+                    // for the removed dialer-level domain_strategy field.
                     pastEntity?.requireBean()?.apply {
                         // don't loopback
                         if (defaultServerDomainStrategy != "" && !serverAddress.isIpAddress()) {
                             domainListDNSDirectForce.add("full:$serverAddress")
                         }
                     }
-                    _hack_config_map["domain_strategy"] =
-                        if (forTest) "" else defaultServerDomainStrategy
-
                     _hack_config_map["tag"] = tagOut
 
                     _hack_custom_config = bean.customOutboundJson
@@ -474,7 +481,11 @@ fun buildConfig(
                     }
                 }
 
-                outbounds.add(currentOutbound)
+                if (currentIsEndpoint) {
+                    endpoints.add(currentOutbound)
+                } else {
+                    outbounds.add(currentOutbound)
+                }
                 chainOutbounds.add(currentOutbound)
                 pastOutbound = currentOutbound
                 pastEntity = proxyEntity
@@ -593,8 +604,8 @@ fun buildConfig(
 
                     -2L -> {
                         userDNSRuleList += makeDnsRuleObj().apply {
-                            server = "dns-block"
-                            disable_cache = true
+                            action = "predefined"
+                            rcode = "NOERROR"
                         }
                     }
                 }
@@ -667,36 +678,29 @@ fun buildConfig(
             }
         }
 
-        dns.servers.add(DNSServerOptions().apply {
-            address = "rcode://success"
-            tag = "dns-block"
-        })
-
-        dns.servers.add(DNSServerOptions().apply {
-            address = "local"
-            tag = "dns-local"
-            detour = TAG_DIRECT
-        })
+        dns.servers.add(buildDNSServer("local", "dns-local", "dns-direct", TAG_DIRECT))
 
         directDNS.firstOrNull().let {
-            dns.servers.add(DNSServerOptions().apply {
-                address = it ?: throw Exception("No direct DNS, check your settings!")
-                tag = "dns-direct"
-                detour = TAG_DIRECT
-                address_resolver = "dns-local"
-                strategy = autoDnsDomainStrategy(SingBoxOptionsUtil.domainStrategy(tag))
-            })
+            dns.servers.add(buildDNSServer(
+                it ?: throw Exception("No direct DNS, check your settings!"),
+                "dns-direct",
+                "dns-local",
+                TAG_DIRECT
+            ))
         }
 
         remoteDns.firstOrNull().let {
             // Always use direct DNS for urlTest
-            if (!forTest) dns.servers.add(DNSServerOptions().apply {
-                address = it ?: throw Exception("No remote DNS, check your settings!")
-                tag = "dns-remote"
-                address_resolver = "dns-direct"
-                strategy = autoDnsDomainStrategy(SingBoxOptionsUtil.domainStrategy(tag))
-            })
+            if (!forTest) dns.servers.add(buildDNSServer(
+                it ?: throw Exception("No remote DNS, check your settings!"),
+                "dns-remote",
+                "dns-direct"
+            ))
         }
+
+        dns.strategy = autoDnsDomainStrategy(
+            SingBoxOptionsUtil.domainStrategy(if (forTest) "dns-direct" else "dns-remote")
+        )
 
         dns.final_ = if (forTest) "dns-direct" else "dns-remote"
 
@@ -733,15 +737,11 @@ fun buildConfig(
             })
             // FakeDNS obj
             if (useFakeDns) {
-                dns.fakeip = DNSFakeIPOptions().apply {
-                    enabled = true
+                dns.servers.add(DNSServerOptions().apply {
+                    type = "fakeip"
+                    tag = "dns-fake"
                     inet4_range = "198.18.0.0/15"
                     inet6_range = "fc00::/18"
-                }
-                dns.servers.add(DNSServerOptions().apply {
-                    address = "fakeip"
-                    tag = "dns-fake"
-                    strategy = "ipv4_only"
                 })
                 dns.rules.add(DNSRule_DefaultOptions().apply {
                     inbound = listOf("tun-in")
@@ -749,11 +749,7 @@ fun buildConfig(
                     disable_cache = true
                 })
             }
-            // avoid loopback
-            dns.rules.add(0, DNSRule_DefaultOptions().apply {
-                outbound = mutableListOf("any")
-                server = "dns-direct"
-            })
+            // Outbound-generated lookups use route.default_domain_resolver in 1.14.
             // force bypass (always top DNS rule)
             if (domainListDNSDirectForce.isNotEmpty()) {
                 dns.rules.add(0, DNSRule_DefaultOptions().apply {

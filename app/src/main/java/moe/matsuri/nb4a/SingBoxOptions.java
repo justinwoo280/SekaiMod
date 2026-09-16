@@ -113,6 +113,8 @@ public class SingBoxOptions {
 
         public List<SingBoxOption> outbounds;
 
+        public List<SingBoxOption> endpoints;
+
         public RouteOptions route;
 
         public ExperimentalOptions experimental;
@@ -312,8 +314,6 @@ public class SingBoxOptions {
 
         public Boolean reverse_mapping;
 
-        public DNSFakeIPOptions fakeip;
-
         // Generate note: nested type DNSClientOptions
         public String strategy;
 
@@ -321,27 +321,46 @@ public class SingBoxOptions {
 
         public Boolean disable_expire;
 
-        public Boolean independent_cache;
-
         // End of public DNSClientOptions ;
 
     }
 
     public static class DNSServerOptions extends SingBoxOption {
-
+        public String type;
         public String tag;
-
-        public String address;
-
-        public String address_resolver;
-
-        public String address_strategy;
-
-        public Long address_fallback_delay;
-
-        public String strategy;
-
+        public String server;
+        public Integer server_port;
+        public String path;
+        public DomainResolveOptions domain_resolver;
         public String detour;
+        public String inet4_range;
+        public String inet6_range;
+        @SerializedName("interface")
+        public String interface_;
+
+    }
+
+    public static class DomainResolveOptions extends SingBoxOption {
+        public String server;
+        public String strategy;
+    }
+
+    public static class Endpoint_WireGuardOptions extends SingBoxOption {
+        public String type;
+        public String tag;
+        public List<String> address;
+        public String private_key;
+        public Integer mtu;
+        public List<WireGuardEndpointPeer> peers;
+    }
+
+    public static class WireGuardEndpointPeer extends SingBoxOption {
+        public String address;
+        public Integer port;
+        public String public_key;
+        public String pre_shared_key;
+        public List<String> allowed_ips;
+        public String reserved;
 
     }
 
@@ -531,6 +550,12 @@ public class SingBoxOptions {
 
         public String hop_interval;
 
+        public Long stream_receive_window;
+
+        public Long connection_receive_window;
+
+        public Boolean disable_path_mtu_discovery;
+
     }
 
     public static class Hysteria2InboundOptions extends SingBoxOption {
@@ -656,6 +681,12 @@ public class SingBoxOptions {
         public List<String> server_ports;
 
         public String hop_interval;
+
+        public Long stream_receive_window;
+
+        public Long connection_receive_window;
+
+        public Boolean disable_path_mtu_discovery;
 
     }
 
@@ -1067,7 +1098,7 @@ public class SingBoxOptions {
         // sing-box 1.13 is stricter; set it to a direct DNS server tag so
         // outbound dialers that need to resolve hostnames (EWP server,
         // ECH HTTPS RR queries, etc.) have an explicit fallback.
-        public String default_domain_resolver;
+        public DomainResolveOptions default_domain_resolver;
 
     }
 
@@ -1986,7 +2017,7 @@ public class SingBoxOptions {
 
         public String config_path;
 
-        // Fork-only: lets users decouple inner SNI from the public ECH key fetch domain.
+        // Upstream since sing-box 1.14: fetch ECH config via DNS HTTPS RR query.
         public String query_server_name;
 
     }
@@ -2856,7 +2887,10 @@ public class SingBoxOptions {
         // Generate note: Listable
         public List<String> exclude_package;
 
-        public Boolean endpoint_independent_nat;
+        public String udp_mapping;
+        public String udp_filtering;
+        public String dns_mode;
+        public List<String> dns_address;
 
         public Long udp_timeout;
 
@@ -3980,11 +4014,16 @@ public class SingBoxOptions {
 
         public String auth_str;
 
-        public Long recv_window_conn;
+        // QUICOptions (sing-box 1.14)
+        public Long stream_receive_window;
 
-        public Long recv_window;
+        public Long connection_receive_window;
 
-        public Boolean disable_mtu_discovery;
+        public Integer max_concurrent_streams;
+
+        public Integer initial_packet_size;
+
+        public Boolean disable_path_mtu_discovery;
 
         public String network;
 
@@ -4360,6 +4399,17 @@ public class SingBoxOptions {
 
         public String password;
 
+        // QUICOptions (sing-box 1.14)
+        public Long stream_receive_window;
+
+        public Long connection_receive_window;
+
+        public Integer max_concurrent_streams;
+
+        public Integer initial_packet_size;
+
+        public Boolean disable_path_mtu_discovery;
+
         public String network;
 
         public OutboundTLSOptions tls;
@@ -4474,6 +4524,9 @@ public class SingBoxOptions {
     }
 
     public static class DNSRule_DefaultOptions extends DNSRule {
+
+        public String action;
+        public String rcode;
 
         // Generate note: Listable
         public List<String> inbound;

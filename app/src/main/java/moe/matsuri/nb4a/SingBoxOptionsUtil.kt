@@ -61,6 +61,8 @@ fun SingBoxOptions.DNSRule_DefaultOptions.makeSingBoxRule(list: List<String>) {
 }
 
 fun SingBoxOptions.DNSRule_DefaultOptions.checkEmpty(): Boolean {
+	if (!action.isNullOrBlank()) return false
+	if (!server.isNullOrBlank()) return false
     if (rule_set?.isNotEmpty() == true) return false
     if (domain?.isNotEmpty() == true) return false
     if (domain_suffix?.isNotEmpty() == true) return false
