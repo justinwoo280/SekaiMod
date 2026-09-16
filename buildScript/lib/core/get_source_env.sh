@@ -1,4 +1,4 @@
-# sing-box mod 1.13.x line, which carries:
+# sing-box mod 1.14.x line, which carries:
 #   - EWP/v2.3.1 (sing-ewp v0.3.1): ticket-based 1-RTT resumption on top
 #     of v2.3 — servers mint rotating tickets after every handshake and
 #     clients with an in-memory store resume in 1 RTT (1.5-RTT to data)
@@ -15,9 +15,9 @@
 #     refragmentation, and async TCP/UDP handoff fixes (gRPC/xhttp).
 #     Config: outbound takes uuid + server_public_key + server_id
 #     (+ route_epoch); inbound takes users + signing_private_key + server_id.
-#   - xhttp: transport delegated to the standalone sing-xhttp v0.1.6 library
+#   - xhttp: transport delegated to the standalone sing-xhttp v0.1.7 library
 #     (full Xray splithttp parity, REALITY/HTTP3/uTLS, per-mode defaults);
-#     in-tree transport/v2rayxhttp is now a thin bridge. v0.1.6 rejects
+#     in-tree transport/v2rayxhttp is now a thin bridge. v0.1.7 rejects
 #     `alpn: ["h3"]` combined with uTLS or REALITY instead of silently falling
 #     back to HTTP/2 over TCP: quic-go runs the TLS 1.3 handshake through
 #     crypto/tls and exposes no hook for a caller-supplied ClientHello, so
@@ -30,8 +30,9 @@
 #     returning the download GET at connection time.
 #   - reality: keep X25519MLKEM768 in ClientHello + correct PQC auth key
 #     selection (byte-identical Chrome fingerprint, working REALITY auth)
-#   - security: bump deps for GO-2026-5856 (crypto/tls ECH PSK leak),
-#     x/net v0.55.0, x/crypto v0.52.0, grpc v1.79.3; requires Go >= 1.25.
-#     govulncheck reports 0 reachable vulnerabilities.
-export COMMIT_SING_BOX="0e1e606db10d43af3e750860466fc74b302df2bd"
+#   - 1.14 port: NekoBox private layer (conntrack + legacy libbox
+#     platform.Interface) re-applied; oomprofile parses /proc/self/maps
+#     locally instead of linkname'ing runtime/pprof internals (Go 1.26
+#     rejects pull-mode linkname); CI follows the fork's 1.13.x workflows.
+export COMMIT_SING_BOX="e21c669bd7783efc10eeefca7c1ad832a50e8fd3"
 export COMMIT_LIBNEKO="1c47a3af71990a7b2192e03292b4d246c308ef0b"
