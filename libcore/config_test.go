@@ -15,6 +15,7 @@ const testSingBox14Config = `{
       { "type": "fakeip", "tag": "dns-fake", "inet4_range": "198.18.0.0/15", "inet6_range": "fc00::/18" }
     ],
     "rules": [
+      { "domain": ["cdn.example.com"], "query_type": ["HTTPS", "SVCB"], "server": "dns-direct" },
       { "inbound": ["tun-in"], "server": "dns-fake" },
       { "domain": ["example.com"], "server": "dns-direct" },
       { "query_type": ["AAAA"], "action": "predefined", "rcode": "NOERROR" }

@@ -133,6 +133,7 @@ fun buildConfig(
     val buildSelector = !forTest && group?.isSelector == true && !forExport
     val userDNSRuleList = mutableListOf<DNSRule_DefaultOptions>()
     val domainListDNSDirectForce = mutableListOf<String>()
+    val echPublicNames = mutableListOf<String>()
     val bypassDNSBeans = hashSetOf<AbstractBean>()
     val isVPN = DataStore.serviceMode == Key.MODE_VPN
     val bind = if (!forTest && DataStore.allowAccess) "0.0.0.0" else LOCALHOST
@@ -148,6 +149,61 @@ fun buildConfig(
     // plain sniffing; UI preference entries stay unchanged.
     val externalIndexMap = ArrayList<IndexEntity>()
     val ipv6Mode = if (forTest) IPv6Mode.ENABLE else DataStore.ipv6Mode
+
+    // The kernel fetches ECH configs through the DNS router
+    // (common/tls/ech.go), so the HTTPS RR query obeys DNS routing.
+    // dns-remote detours through the proxy; when the proxy itself needs
+    // ECH to come up, the query loops and the kernel rejects it
+    // ("DNS query loopback in transport[dns-remote]"). sing-box 1.14 has
+    // no "bootstrap direct, refresh via remote" mechanism, so we pin the
+    // effective ECH public names (query_server_name ?: sni ?: server
+    // host) to the direct DNS — the public name is meant to be publicly
+    // resolvable before any tunnel exists.
+    fun collectEchPublicName(bean: AbstractBean): String? {
+        var enabled = false
+        var queryServerName = ""
+        var sni = ""
+        when (bean) {
+            is StandardV2RayBean -> {
+                enabled = bean.enableECH
+                queryServerName = bean.echQueryServerName
+                sni = bean.sni
+            }
+
+            is HysteriaBean -> {
+                enabled = bean.enableECH
+                queryServerName = bean.echQueryServerName
+                sni = bean.sni
+            }
+
+            is TuicBean -> {
+                enabled = bean.enableECH
+                queryServerName = bean.echQueryServerName
+                sni = bean.sni
+            }
+
+            is AnyTLSBean -> {
+                enabled = bean.enableECH
+                queryServerName = bean.echQueryServerName
+                sni = bean.sni
+            }
+
+            is EwpBean -> {
+                enabled = bean.enableECH
+                queryServerName = bean.echQueryServerName
+                sni = bean.sni
+            }
+
+            else -> return null
+        }
+        if (!enabled) return null
+        return when {
+            queryServerName.isNotBlank() -> queryServerName
+            sni.isNotBlank() -> sni
+            !bean.serverAddress.isIpAddress() -> bean.serverAddress
+            else -> null
+        }?.lowercase()
+    }
 
     fun genDomainStrategy(noAsIs: Boolean): String {
         return when {
@@ -297,6 +353,7 @@ fun buildConfig(
 
             profileList.forEachIndexed { index, proxyEntity ->
                 val bean = proxyEntity.requireBean()
+                collectEchPublicName(bean)?.let(echPublicNames::add)
                 var currentIsEndpoint = false
 
                 // tagOut: v2ray outbound tag for a profile
@@ -761,6 +818,15 @@ fun buildConfig(
             if (domainListDNSDirectForce.isNotEmpty()) {
                 dns.rules.add(0, DNSRule_DefaultOptions().apply {
                     makeSingBoxRule(domainListDNSDirectForce.toHashSet().toList())
+                    server = "dns-direct"
+                })
+            }
+            // ECH bootstrap queries must never route through the proxy
+            // (they are what brings the proxy up) — see collectEchPublicName.
+            if (echPublicNames.isNotEmpty()) {
+                dns.rules.add(0, DNSRule_DefaultOptions().apply {
+                    query_type = listOf("HTTPS", "SVCB")
+                    domain = echPublicNames.distinct()
                     server = "dns-direct"
                 })
             }
