@@ -26,6 +26,7 @@ import io.nekohasekai.sagernet.ktx.readableMessage
 import io.nekohasekai.sagernet.ktx.toStringPretty
 import io.nekohasekai.sagernet.ui.ThemedActivity
 import io.nekohasekai.sagernet.widget.ListListener
+import libcore.Libcore
 import moe.matsuri.nb4a.ui.ExtendedKeyboard
 import org.json.JSONObject
 
@@ -156,13 +157,35 @@ class ConfigEditActivity : ThemedActivity() {
 
     fun saveAndExit() {
         formatText()?.let {
-            if (useConfigStore) {
-                DataStore.configurationStore.putString(key, it)
-            } else {
-                DataStore.profileCacheStore.putString(key, it)
+            // Only the global custom config is a complete sing-box document;
+            // per-profile fragments are merged later, so skip kernel checks.
+            if (useConfigStore && key == Key.GLOBAL_CUSTOM_CONFIG && it.isNotBlank()) {
+                val error = try {
+                    Libcore.checkSingBoxConfig(it, null)
+                    null
+                } catch (e: Exception) {
+                    e.readableMessage
+                }
+                if (error != null) {
+                    MaterialAlertDialogBuilder(this).setTitle(R.string.error_title)
+                        .setMessage(error)
+                        .setPositiveButton(R.string.yes) { _, _ -> persistAndFinish(it) }
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show()
+                    return
+                }
             }
-            finish()
+            persistAndFinish(it)
         }
+    }
+
+    private fun persistAndFinish(config: String) {
+        if (useConfigStore) {
+            DataStore.configurationStore.putString(key, config)
+        } else {
+            DataStore.profileCacheStore.putString(key, config)
+        }
+        finish()
     }
 
     override fun onBackPressed() {
