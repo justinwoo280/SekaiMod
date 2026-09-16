@@ -54,6 +54,8 @@ public abstract class StandardV2RayBean extends AbstractBean {
 
     public String echConfig;
 
+    public String echQueryServerName;
+
     // --------------------------------------- Mux
 
     public Boolean enableMux;
@@ -114,6 +116,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
 
         if (enableECH == null) enableECH = false;
         if (JavaUtil.isNullOrBlank(echConfig)) echConfig = "";
+        if (JavaUtil.isNullOrBlank(echQueryServerName)) echQueryServerName = "";
 
         if (enableMux == null) enableMux = false;
         if (muxPadding == null) muxPadding = false;
@@ -132,7 +135,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
 
     @Override
     public void serialize(ByteBufferOutput output) {
-        output.writeInt(5);
+        output.writeInt(6);
         super.serialize(output);
         output.writeString(uuid);
         output.writeString(encryption);
@@ -191,6 +194,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
 
         output.writeBoolean(enableECH);
         output.writeString(echConfig);
+        output.writeString(echQueryServerName);
 
         output.writeInt(packetEncoding);
 
@@ -276,6 +280,9 @@ public abstract class StandardV2RayBean extends AbstractBean {
                     input.readBoolean();
                     echConfig = input.readString();
                 }
+            }
+            if (version >= 6) {
+                echQueryServerName = input.readString();
             }
         } else if (version == 0) {
             // 从老版本升级上来但是 version == 0, 可能有 enableECH 也可能没有，需要做判断

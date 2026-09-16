@@ -35,6 +35,9 @@ class HysteriaSettingsActivity : ProfileSettingsActivity<HysteriaBean>() {
         DataStore.serverConnectionReceiveWindow = connectionReceiveWindow
         DataStore.serverDisableMtuDiscovery = disableMtuDiscovery
         DataStore.serverHopInterval = hopInterval
+        DataStore.profileCacheStore.putBoolean("enableECH", enableECH)
+        DataStore.profileCacheStore.putString("echConfig", echConfig)
+        DataStore.profileCacheStore.putString("echQueryServerName", echQueryServerName)
     }
 
     override fun HysteriaBean.serialize() {
@@ -56,6 +59,9 @@ class HysteriaSettingsActivity : ProfileSettingsActivity<HysteriaBean>() {
         connectionReceiveWindow = DataStore.serverConnectionReceiveWindow
         disableMtuDiscovery = DataStore.serverDisableMtuDiscovery
         hopInterval = DataStore.serverHopInterval
+        enableECH = DataStore.profileCacheStore.getBoolean("enableECH")
+        echConfig = DataStore.profileCacheStore.getString("echConfig") ?: ""
+        echQueryServerName = DataStore.profileCacheStore.getString("echQueryServerName") ?: ""
     }
 
     override fun PreferenceFragmentCompat.createPreferences(

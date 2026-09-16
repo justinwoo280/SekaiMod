@@ -24,6 +24,9 @@ public class HysteriaBean extends AbstractBean {
     public String obfuscation;
     public String sni;
     public String caText;
+    public Boolean enableECH;
+    public String echConfig;
+    public String echQueryServerName;
     public Integer uploadMbps;
     public Integer downloadMbps;
     public Boolean allowInsecure;
@@ -64,6 +67,9 @@ public class HysteriaBean extends AbstractBean {
         if (alpn == null) alpn = "";
         if (caText == null) caText = "";
         if (allowInsecure == null) allowInsecure = false;
+        if (enableECH == null) enableECH = false;
+        if (echConfig == null) echConfig = "";
+        if (echQueryServerName == null) echQueryServerName = "";
 
         if (protocolVersion == 1) {
             if (uploadMbps == null) uploadMbps = 10;
@@ -82,7 +88,7 @@ public class HysteriaBean extends AbstractBean {
 
     @Override
     public void serialize(ByteBufferOutput output) {
-        output.writeInt(7);
+        output.writeInt(8);
         super.serialize(output);
 
         output.writeInt(protocolVersion);
@@ -104,6 +110,9 @@ public class HysteriaBean extends AbstractBean {
         output.writeBoolean(disableMtuDiscovery);
         output.writeInt(hopInterval);
         output.writeString(serverPorts);
+        output.writeBoolean(enableECH);
+        output.writeString(echConfig);
+        output.writeString(echQueryServerName);
     }
 
     @Override
@@ -147,6 +156,11 @@ public class HysteriaBean extends AbstractBean {
             } else {
                 serverPorts = serverPort.toString();
             }
+        }
+        if (version >= 8) {
+            enableECH = input.readBoolean();
+            echConfig = input.readString();
+            echQueryServerName = input.readString();
         }
     }
 

@@ -28,6 +28,9 @@ class TuicSettingsActivity : ProfileSettingsActivity<TuicBean>() {
         DataStore.serverSNI = sni
         DataStore.serverReduceRTT = reduceRTT
         DataStore.serverAllowInsecure = allowInsecure
+        DataStore.profileCacheStore.putBoolean("enableECH", enableECH)
+        DataStore.profileCacheStore.putString("echConfig", echConfig)
+        DataStore.profileCacheStore.putString("echQueryServerName", echQueryServerName)
     }
 
     override fun TuicBean.serialize() {
@@ -44,6 +47,9 @@ class TuicSettingsActivity : ProfileSettingsActivity<TuicBean>() {
         sni = DataStore.serverSNI
         reduceRTT = DataStore.serverReduceRTT
         allowInsecure = DataStore.serverAllowInsecure
+        enableECH = DataStore.profileCacheStore.getBoolean("enableECH")
+        echConfig = DataStore.profileCacheStore.getString("echConfig") ?: ""
+        echQueryServerName = DataStore.profileCacheStore.getString("echQueryServerName") ?: ""
     }
 
     override fun PreferenceFragmentCompat.createPreferences(

@@ -232,6 +232,11 @@
             app:key="echConfig"
             app:title="@string/ech_config"
             app:useSimpleSummaryProvider="true" />
+        <EditTextPreference
+            app:icon="@drawable/ic_action_copyright"
+            app:key="echQueryServerName"
+            app:summary="FQDN used to fetch ECH config via HTTPS RR (decouples from inner SNI)"
+            app:title="ECH Query Server Name" />
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -95,6 +95,15 @@ fun parseHysteria2(url: String): HysteriaBean {
         link.queryParameter("obfs-password")?.also {
             obfuscation = it
         }
+        link.queryParameter("ech")?.also {
+            enableECH = it == "1" || it == "true"
+        }
+        link.queryParameter("echCfg")?.also {
+            echConfig = it.replace("|", "\n")
+        }
+        link.queryParameter("echQs")?.also {
+            echQueryServerName = it
+        }
 //        link.queryParameter("pinSHA256")?.also {
 //            // TODO your box do not support it
 //        }
@@ -159,6 +168,15 @@ fun HysteriaBean.toUri(): String {
         if (obfuscation.isNotBlank()) {
             builder.addQueryParameter("obfs", "salamander")
             builder.addQueryParameter("obfs-password", obfuscation)
+        }
+    }
+    if (enableECH) {
+        builder.addQueryParameter("ech", "1")
+        if (echConfig.isNotBlank()) {
+            builder.addQueryParameter("echCfg", echConfig.replace("\n", "|"))
+        }
+        if (echQueryServerName.isNotBlank()) {
+            builder.addQueryParameter("echQs", echQueryServerName)
         }
     }
     return builder.toLink(if (protocolVersion == 2) "hy2" else "hysteria")
@@ -287,16 +305,16 @@ fun buildSingBoxOutboundHysteriaBean(bean: HysteriaBean): SingBoxOptions.SingBox
             up_mbps = bean.uploadMbps
             down_mbps = bean.downloadMbps
             obfs = bean.obfuscation
-            disable_mtu_discovery = bean.disableMtuDiscovery
+            disable_path_mtu_discovery = bean.disableMtuDiscovery
             when (bean.authPayloadType) {
                 HysteriaBean.TYPE_BASE64 -> auth = bean.authPayload
                 HysteriaBean.TYPE_STRING -> auth_str = bean.authPayload
             }
             if (bean.streamReceiveWindow > 0) {
-                recv_window_conn = bean.streamReceiveWindow.toLong()
+                stream_receive_window = bean.streamReceiveWindow.toLong()
             }
             if (bean.connectionReceiveWindow > 0) {
-                recv_window_conn = bean.connectionReceiveWindow.toLong()
+                connection_receive_window = bean.connectionReceiveWindow.toLong()
             }
             tls = SingBoxOptions.OutboundTLSOptions().apply {
                 if (bean.sni.isNotBlank()) {
@@ -310,6 +328,7 @@ fun buildSingBoxOutboundHysteriaBean(bean: HysteriaBean): SingBoxOptions.SingBox
                 }
                 insecure = bean.allowInsecure || DataStore.globalAllowInsecure
                 enabled = true
+                applyEch(bean)
             }
         }
 
@@ -331,14 +350,14 @@ fun buildSingBoxOutboundHysteriaBean(bean: HysteriaBean): SingBoxOptions.SingBox
                     password = bean.obfuscation
                 }
             }
-//            disable_mtu_discovery = bean.disableMtuDiscovery
+            disable_path_mtu_discovery = bean.disableMtuDiscovery
             password = bean.authPayload
-//            if (bean.streamReceiveWindow > 0) {
-//                recv_window_conn = bean.streamReceiveWindow.toLong()
-//            }
-//            if (bean.connectionReceiveWindow > 0) {
-//                recv_window_conn = bean.connectionReceiveWindow.toLong()
-//            }
+            if (bean.streamReceiveWindow > 0) {
+                stream_receive_window = bean.streamReceiveWindow.toLong()
+            }
+            if (bean.connectionReceiveWindow > 0) {
+                connection_receive_window = bean.connectionReceiveWindow.toLong()
+            }
             tls = SingBoxOptions.OutboundTLSOptions().apply {
                 if (bean.sni.isNotBlank()) {
                     server_name = bean.sni
@@ -349,10 +368,25 @@ fun buildSingBoxOutboundHysteriaBean(bean: HysteriaBean): SingBoxOptions.SingBox
                 }
                 insecure = bean.allowInsecure || DataStore.globalAllowInsecure
                 enabled = true
+                applyEch(bean)
             }
         }
 
         else -> error("error_version $bean.protocolVersion")
+    }
+}
+
+private fun SingBoxOptions.OutboundTLSOptions.applyEch(bean: HysteriaBean) {
+    if (bean.enableECH) {
+        ech = SingBoxOptions.OutboundECHOptions().apply {
+            enabled = true
+            if (bean.echConfig.isNotBlank()) {
+                config = bean.echConfig.lines()
+            }
+            if (bean.echQueryServerName.isNotBlank()) {
+                query_server_name = bean.echQueryServerName
+            }
+        }
     }
 }
 

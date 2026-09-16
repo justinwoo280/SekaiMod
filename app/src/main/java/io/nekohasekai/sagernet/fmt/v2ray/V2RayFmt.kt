@@ -184,6 +184,15 @@ fun StandardV2RayBean.parseDuckSoft(url: HttpUrl) {
             url.queryParameter("sid")?.let {
                 realityShortId = it
             }
+            url.queryParameter("ech")?.let {
+                enableECH = it == "1" || it == "true"
+            }
+            url.queryParameter("echCfg")?.let {
+                echConfig = it.replace("|", "\n")
+            }
+            url.queryParameter("echQs")?.let {
+                echQueryServerName = it
+            }
         }
     }
 
@@ -512,6 +521,14 @@ fun StandardV2RayBean.toUriVMessVLESSTrojan(isTrojan: Boolean): String {
                     builder.setQueryParameter("security", "reality")
                     builder.addQueryParameter("pbk", realityPubKey)
                     builder.addQueryParameter("sid", realityShortId)
+                } else if (enableECH) {
+                    builder.addQueryParameter("ech", "1")
+                    if (echConfig.isNotBlank()) {
+                        builder.addQueryParameter("echCfg", echConfig.replace("\n", "|"))
+                    }
+                    if (echQueryServerName.isNotBlank()) {
+                        builder.addQueryParameter("echQs", echQueryServerName)
+                    }
                 }
             }
         }
@@ -660,6 +677,9 @@ fun buildSingBoxOutboundTLS(bean: StandardV2RayBean): OutboundTLSOptions? {
                 enabled = true
                 if (bean.echConfig.isNotBlank()) {
                     config = bean.echConfig.lines()
+                }
+                if (bean.echQueryServerName.isNotBlank()) {
+                    query_server_name = bean.echQueryServerName
                 }
             }
         }

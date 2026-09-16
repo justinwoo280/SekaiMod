@@ -29,11 +29,15 @@ fun buildSingBoxOutboundAnyTLSBean(bean: AnyTLSBean): SingBoxOptions.Outbound_An
                     fingerprint = it
                 }
             }
-            bean.echConfig.blankAsNull()?.let {
-                // In new version, some complex options will be deprecated, so we just do this.
+            if (bean.enableECH) {
                 ech = SingBoxOptions.OutboundECHOptions().apply {
                     enabled = true
-                    config = listOf(it)
+                    bean.echConfig.blankAsNull()?.let {
+                        config = it.lines()
+                    }
+                    bean.echQueryServerName.blankAsNull()?.let {
+                        query_server_name = it
+                    }
                 }
             }
         }
@@ -57,6 +61,15 @@ fun AnyTLSBean.toUri(): String {
     if (!utlsFingerprint.isNullOrBlank()) {
         builder.addQueryParameter("fp", utlsFingerprint)
     }
+    if (enableECH) {
+        builder.addQueryParameter("ech", "1")
+        if (echConfig.isNotBlank()) {
+            builder.addQueryParameter("echCfg", echConfig.replace("\n", "|"))
+        }
+        if (echQueryServerName.isNotBlank()) {
+            builder.addQueryParameter("echQs", echQueryServerName)
+        }
+    }
     return builder.toLink("anytls")
 }
 
@@ -76,6 +89,15 @@ fun parseAnytls(url: String): AnyTLSBean {
         }
         link.queryParameter("fp")?.let {
             utlsFingerprint = it
+        }
+        link.queryParameter("ech")?.let {
+            enableECH = it == "1" || it == "true"
+        }
+        link.queryParameter("echCfg")?.let {
+            echConfig = it.replace("|", "\n")
+        }
+        link.queryParameter("echQs")?.let {
+            echQueryServerName = it
         }
     }
 }

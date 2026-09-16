@@ -35,6 +35,8 @@ public class AnyTLSBean extends AbstractBean {
     // https://github.com/anytls/anytls-go/blob/4636d90462fa21a510420512d7706a9acf69c7b9/docs/faq.md?plain=1#L25-L37
 
     public String echConfig;
+    public Boolean enableECH;
+    public String echQueryServerName;
 
     @Override
     public void initializeDefaultValues() {
@@ -46,11 +48,13 @@ public class AnyTLSBean extends AbstractBean {
         if (utlsFingerprint == null) utlsFingerprint = "";
         if (allowInsecure == null) allowInsecure = false;
         if (echConfig == null) echConfig = "";
+        if (enableECH == null) enableECH = !echConfig.isEmpty();
+        if (echQueryServerName == null) echQueryServerName = "";
     }
 
     @Override
     public void serialize(ByteBufferOutput output) {
-        output.writeInt(0);
+        output.writeInt(1);
         super.serialize(output);
         output.writeString(password);
         output.writeString(sni);
@@ -59,6 +63,8 @@ public class AnyTLSBean extends AbstractBean {
         output.writeString(utlsFingerprint);
         output.writeBoolean(allowInsecure);
         output.writeString(echConfig);
+        output.writeBoolean(enableECH);
+        output.writeString(echQueryServerName);
     }
 
     @Override
@@ -72,6 +78,10 @@ public class AnyTLSBean extends AbstractBean {
         utlsFingerprint = input.readString();
         allowInsecure = input.readBoolean();
         echConfig = input.readString();
+        if (version >= 1) {
+            enableECH = input.readBoolean();
+            echQueryServerName = input.readString();
+        }
     }
 
     @NotNull

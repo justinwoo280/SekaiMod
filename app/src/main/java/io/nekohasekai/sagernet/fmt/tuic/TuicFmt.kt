@@ -50,6 +50,15 @@ fun parseTuic(url: String): TuicBean {
         link.queryParameter("disable_sni")?.let {
             if (it == "1") disableSNI = true
         }
+        link.queryParameter("ech")?.let {
+            enableECH = it == "1" || it == "true"
+        }
+        link.queryParameter("echCfg")?.let {
+            echConfig = it.replace("|", "\n")
+        }
+        link.queryParameter("echQs")?.let {
+            echQueryServerName = it
+        }
     }
 }
 
@@ -63,6 +72,11 @@ fun TuicBean.toUri(): String {
     if (alpn.isNotBlank()) builder.addQueryParameter("alpn", alpn)
     if (allowInsecure) builder.addQueryParameter("allow_insecure", "1")
     if (disableSNI) builder.addQueryParameter("disable_sni", "1")
+    if (enableECH) {
+        builder.addQueryParameter("ech", "1")
+        if (echConfig.isNotBlank()) builder.addQueryParameter("echCfg", echConfig.replace("\n", "|"))
+        if (echQueryServerName.isNotBlank()) builder.addQueryParameter("echQs", echQueryServerName)
+    }
     if (name.isNotBlank()) builder.encodedFragment(name.urlSafe())
 
     return builder.toLink("tuic")
@@ -94,6 +108,17 @@ fun buildSingBoxOutboundTuicBean(bean: TuicBean): SingBoxOptions.Outbound_TUICOp
             disable_sni = bean.disableSNI
             insecure = bean.allowInsecure || DataStore.globalAllowInsecure
             enabled = true
+            if (bean.enableECH) {
+                ech = SingBoxOptions.OutboundECHOptions().apply {
+                    enabled = true
+                    if (bean.echConfig.isNotBlank()) {
+                        config = bean.echConfig.lines()
+                    }
+                    if (bean.echQueryServerName.isNotBlank()) {
+                        query_server_name = bean.echQueryServerName
+                    }
+                }
+            }
         }
     }
 }

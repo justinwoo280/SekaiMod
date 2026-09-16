@@ -22,6 +22,12 @@ public class TuicBean extends AbstractBean {
     public Integer mtu;
     public String sni;
 
+    // ECH
+
+    public Boolean enableECH;
+    public String echConfig;
+    public String echQueryServerName;
+
     // TUIC zep
 
     public Boolean fastConnect;
@@ -50,11 +56,14 @@ public class TuicBean extends AbstractBean {
         if (customJSON == null) customJSON = "";
         if (protocolVersion == null) protocolVersion = 5;
         if (uuid == null) uuid = "";
+        if (enableECH == null) enableECH = false;
+        if (echConfig == null) echConfig = "";
+        if (echQueryServerName == null) echQueryServerName = "";
     }
 
     @Override
     public void serialize(ByteBufferOutput output) {
-        output.writeInt(2);
+        output.writeInt(3);
         super.serialize(output);
         output.writeString(token);
         output.writeString(caText);
@@ -70,6 +79,9 @@ public class TuicBean extends AbstractBean {
         output.writeString(customJSON);
         output.writeInt(protocolVersion);
         output.writeString(uuid);
+        output.writeBoolean(enableECH);
+        output.writeString(echConfig);
+        output.writeString(echQueryServerName);
     }
 
     @Override
@@ -95,6 +107,11 @@ public class TuicBean extends AbstractBean {
             uuid = input.readString();
         } else {
             protocolVersion = 4;
+        }
+        if (version >= 3) {
+            enableECH = input.readBoolean();
+            echConfig = input.readString();
+            echQueryServerName = input.readString();
         }
     }
 
