@@ -54,6 +54,7 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
     private val muxConcurrency = pbm.add(PreferenceBinding(Type.TextToInt, "muxConcurrency"))
 
     private val xhttpMode = pbm.add(PreferenceBinding(Type.Text, "xhttpMode"))
+    private val xhttpBrowser = pbm.add(PreferenceBinding(Type.Bool, "xhttpBrowser"))
     private val xhttpPaddingBytes = pbm.add(PreferenceBinding(Type.Text, "xhttpPaddingBytes"))
     private val xhttpXmuxMaxConcurrency = pbm.add(PreferenceBinding(Type.Text, "xhttpXmuxMaxConcurrency"))
     private val xhttpXmuxMaxConnections = pbm.add(PreferenceBinding(Type.Text, "xhttpXmuxMaxConnections"))
@@ -101,6 +102,8 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
         val isHttp = tmpBean is HttpBean
         val isVmess = tmpBean is VMessBean && tmpBean?.isVLESS == false
         val isVless = tmpBean?.isVLESS == true
+        browserCapable = isVless
+        currentBrowser = browserCapable && xhttpBrowser.readBoolFromCache()
 
         serverPort.preference.apply {
             this as EditTextPreference
@@ -163,6 +166,34 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
             }
         }
 
+        xhttpBrowser.preference.isVisible = browserCapable
+        xhttpBrowser.preference.setOnPreferenceChangeListener { _, newValue ->
+            currentBrowser = newValue as Boolean
+            updateBrowserView()
+            true
+        }
+        updateBrowserView()
+
+        val realityPubKeyPref = findPreference<EditTextPreference>("realityPubKey")
+        val realityShortIdPref = findPreference<EditTextPreference>("realityShortId")
+        val enableEchPref = findPreference<androidx.preference.SwitchPreference>("enableECH")
+        fun syncTlsCamouflageMutex() {
+            val realityOn = !realityPubKeyPref?.text.isNullOrBlank()
+            val echOn = enableEchPref?.isChecked == true
+            echCategory.isEnabled = !realityOn
+            realityPubKeyPref?.isEnabled = !echOn
+            realityShortIdPref?.isEnabled = !echOn
+        }
+        syncTlsCamouflageMutex()
+        realityPubKeyPref?.setOnPreferenceChangeListener { _, _ ->
+            view?.post { syncTlsCamouflageMutex() }
+            true
+        }
+        enableEchPref?.setOnPreferenceChangeListener { _, _ ->
+            view?.post { syncTlsCamouflageMutex() }
+            true
+        }
+
         // XHTTP default values shown when tuning fields are left unset.
         // Values are Xray-aligned and uniform across modes.
         findPreference<androidx.preference.Preference>("xhttpModeDefaultsInfo")
@@ -220,6 +251,8 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
                 xhttpXmuxCategory.isVisible = true
             }
         }
+        xhttpBrowser.preference.isVisible = browserCapable
+        updateBrowserView()
     }
 
     private fun updateTls(tls: String) {
@@ -240,10 +273,40 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
     // selection and inverts the behavior.
     private var currentNetworkType: String = "tcp"
     private var currentSecurityType: String = ""
+    private var browserCapable: Boolean = false
+    private var currentBrowser: Boolean = false
+    private var xhttpModeBeforeBrowser: String = ""
 
     private fun updateCamouflageVisibility() {
         val isTLS = "tls" in currentSecurityType
         tlsCamouflageCategory.isVisible = isTLS && currentNetworkType != "quic"
+    }
+
+    private fun updateBrowserView() {
+        val browser = browserCapable && currentBrowser && currentNetworkType == "xhttp"
+        val modePreference = xhttpMode.preference as SimpleMenuPreference
+
+        if (browserCapable && currentBrowser) {
+            modePreference.setEntries(R.array.xhttp_browser_mode_entry)
+            modePreference.setEntryValues(R.array.xhttp_browser_mode_value)
+            val mode = xhttpMode.readStringFromCache()
+            if (mode != "packet-up" && mode != "stream-up") {
+                if (xhttpModeBeforeBrowser.isBlank()) xhttpModeBeforeBrowser = mode
+                modePreference.value = "packet-up"
+            }
+        } else {
+            modePreference.setEntries(R.array.xhttp_mode_entry)
+            modePreference.setEntryValues(R.array.xhttp_mode_value)
+            if (xhttpModeBeforeBrowser.isNotBlank()) {
+                modePreference.value = xhttpModeBeforeBrowser
+                xhttpModeBeforeBrowser = ""
+            }
+        }
+
+        xhttpXmuxCategory.isEnabled = !browser
+        allowInsecure.preference.isEnabled = !browser
+        alpn.preference.isEnabled = !browser
+        utlsFingerprint.preference.isEnabled = !browser
     }
 
 }

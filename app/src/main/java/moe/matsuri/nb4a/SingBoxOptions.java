@@ -4674,6 +4674,8 @@ public class SingBoxOptions {
 
     public static class V2RayTransportOptions_XHTTPOptions extends V2RayTransportOptions {
 
+        public Boolean browser;
+
         public String mode;
 
         public String host;

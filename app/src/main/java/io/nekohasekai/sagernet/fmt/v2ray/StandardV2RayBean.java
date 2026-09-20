@@ -70,6 +70,8 @@ public abstract class StandardV2RayBean extends AbstractBean {
 
     // --------------------------------------- xhttp
 
+    public Boolean xhttpBrowser;
+
     public String xhttpMode;
     public String xhttpPaddingBytes;
     public String xhttpXmuxMaxConcurrency;
@@ -123,6 +125,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
         if (muxType == null) muxType = 0;
         if (muxConcurrency == null) muxConcurrency = 1;
 
+        if (xhttpBrowser == null) xhttpBrowser = false;
         if (JavaUtil.isNullOrBlank(xhttpMode)) xhttpMode = "auto";
         if (xhttpPaddingBytes == null) xhttpPaddingBytes = "";
         if (xhttpXmuxMaxConcurrency == null) xhttpXmuxMaxConcurrency = "";
@@ -135,7 +138,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
 
     @Override
     public void serialize(ByteBufferOutput output) {
-        output.writeInt(6);
+        output.writeInt(7);
         super.serialize(output);
         output.writeString(uuid);
         output.writeString(encryption);
@@ -169,6 +172,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
             case "xhttp": {
                 output.writeString(host);
                 output.writeString(path);
+                output.writeBoolean(Boolean.TRUE.equals(xhttpBrowser));
                 output.writeString(xhttpMode);
                 output.writeString(xhttpPaddingBytes);
                 output.writeString(xhttpXmuxMaxConcurrency);
@@ -246,6 +250,9 @@ public abstract class StandardV2RayBean extends AbstractBean {
                 host = input.readString();
                 path = input.readString();
                 if (version >= 5) {
+                    if (version >= 7) {
+                        xhttpBrowser = input.readBoolean();
+                    }
                     xhttpMode = input.readString();
                     xhttpPaddingBytes = input.readString();
                     xhttpXmuxMaxConcurrency = input.readString();

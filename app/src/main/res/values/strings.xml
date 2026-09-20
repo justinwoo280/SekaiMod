@@ -567,6 +567,8 @@
     <string name="http_upgrade_host">HTTPUpgrade Host</string>
     <string name="http_upgrade_path">HTTPUpgrade Path</string>
     <string name="xhttp_settings">XHTTP Settings</string>
+    <string name="xhttp_browser">Browser Dialer</string>
+    <string name="xhttp_browser_summary">Use Cronet browser networking; disables Xmux and incompatible TLS tuning</string>
     <string name="xhttp_mode">XHTTP Mode</string>
     <string name="xhttp_padding_bytes">Padding Bytes (from-to)</string>
     <string name="xhttp_mode_defaults_title">Defaults (when unset)</string>

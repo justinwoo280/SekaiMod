@@ -62,6 +62,11 @@
     <PreferenceCategory
         app:key="serverXhttpCategory"
         app:title="@string/xhttp_settings">
+        <SwitchPreference
+            app:icon="@drawable/ic_baseline_http_24"
+            app:key="xhttpBrowser"
+            app:summary="@string/xhttp_browser_summary"
+            app:title="@string/xhttp_browser" />
         <moe.matsuri.nb4a.ui.SimpleMenuPreference
             app:defaultValue="auto"
             app:entries="@array/xhttp_mode_entry"

@@ -23,6 +23,7 @@ import libcore.Libcore
 import moe.matsuri.nb4a.Protocols
 import moe.matsuri.nb4a.proxy.anytls.AnyTLSBean
 import moe.matsuri.nb4a.proxy.config.ConfigBean
+import moe.matsuri.nb4a.proxy.ewp.EwpBean
 import moe.matsuri.nb4a.utils.Util
 import org.ini4j.Ini
 import org.json.JSONArray
@@ -164,6 +165,11 @@ object RawUpdater : GroupUpdater() {
                 // 更新订阅，保留自定义覆写设置
                 bean.customOutboundJson = existsBean.customOutboundJson
                 bean.customConfigJson = existsBean.customConfigJson
+                if (existsBean is StandardV2RayBean && bean is StandardV2RayBean) {
+                    bean.xhttpBrowser = existsBean.xhttpBrowser
+                } else if (existsBean is EwpBean && bean is EwpBean) {
+                    bean.xhttpBrowser = existsBean.xhttpBrowser
+                }
                 when {
                     existsBean != bean -> {
                         changed++

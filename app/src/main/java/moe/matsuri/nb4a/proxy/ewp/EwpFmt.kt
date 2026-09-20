@@ -45,19 +45,26 @@ fun buildSingBoxOutboundEwpBean(bean: EwpBean): Outbound_EwpOptions {
 }
 
 private fun buildEwpTLS(bean: EwpBean): OutboundTLSOptions {
+    val browser = bean.type == "xhttp" && bean.xhttpBrowser == true
+    val browserReality = browser && bean.realityPubKey.isNotBlank()
     return OutboundTLSOptions().apply {
         enabled = true
-        insecure = bean.allowInsecure || DataStore.globalAllowInsecure
+        insecure = !browser && (bean.allowInsecure || DataStore.globalAllowInsecure)
         if (bean.sni.isNotBlank()) server_name = bean.sni
-        if (bean.alpn.isNotBlank()) alpn = bean.alpn.listByLineOrComma()
-        if (bean.certificates.isNotBlank()) certificate = bean.certificates
+        if (bean.alpn.isNotBlank()) {
+            val requestedAlpn = bean.alpn.listByLineOrComma()
+            if (!browser || requestedAlpn == listOf("h2", "http/1.1")) alpn = requestedAlpn
+        }
+        if (bean.certificates.isNotBlank() && !browserReality) certificate = bean.certificates
 
         // TLS fragmentation (anti-censor)
-        if (bean.tlsFragment) fragment = true
-        if (bean.tlsRecordFragment) record_fragment = true
+        if (!browser) {
+            if (bean.tlsFragment) fragment = true
+            if (bean.tlsRecordFragment) record_fragment = true
+        }
 
         // uTLS / Reality
-        var fp: String? = bean.utlsFingerprint
+        var fp: String? = if (browser) null else bean.utlsFingerprint
         if (bean.realityPubKey.isNotBlank()) {
             reality = OutboundRealityOptions().apply {
                 enabled = true
@@ -66,10 +73,10 @@ private fun buildEwpTLS(bean: EwpBean): OutboundTLSOptions {
             }
             if (fp.isNullOrBlank()) fp = "chrome"
         }
-        if (!fp.isNullOrBlank()) {
+        if (!browser && !fp.isNullOrBlank()) {
             utls = OutboundUTLSOptions().apply {
                 enabled = true
-                fingerprint = fp
+                fingerprint = fp!!
             }
         }
 
@@ -130,18 +137,24 @@ private fun buildEwpTransport(bean: EwpBean): V2RayTransportOptions? {
         }
 
         "xhttp" -> V2RayTransportOptions_XHTTPOptions().apply {
+            val browser = bean.xhttpBrowser == true
             type = "xhttp"
-            mode = bean.xhttpMode.takeIf { it.isNotBlank() } ?: "auto"
+            this.browser = browser
+            mode = if (browser) {
+                bean.xhttpMode.takeIf { it == "packet-up" || it == "stream-up" } ?: "packet-up"
+            } else {
+                bean.xhttpMode.takeIf { it.isNotBlank() } ?: "auto"
+            }
             if (bean.host.isNotBlank()) host = bean.host
             if (bean.path.isNotBlank()) path = bean.path
             if (bean.xhttpPaddingBytes.isNotBlank()) x_padding_bytes = bean.xhttpPaddingBytes
 
-            val hasXmux = bean.xhttpXmuxMaxConcurrency.isNotBlank() ||
+            val hasXmux = !browser && (bean.xhttpXmuxMaxConcurrency.isNotBlank() ||
                 bean.xhttpXmuxMaxConnections.isNotBlank() ||
                 bean.xhttpXmuxCMaxReuseTimes.isNotBlank() ||
                 bean.xhttpXmuxHMaxRequestTimes.isNotBlank() ||
                 bean.xhttpXmuxHMaxReusableSecs.isNotBlank() ||
-                (bean.xhttpXmuxHKeepAlivePeriod != null && bean.xhttpXmuxHKeepAlivePeriod > 0)
+                (bean.xhttpXmuxHKeepAlivePeriod != null && bean.xhttpXmuxHKeepAlivePeriod > 0))
             if (hasXmux) {
                 xmux = V2RayXHTTPXmuxOptions().apply {
                     if (bean.xhttpXmuxMaxConcurrency.isNotBlank()) max_concurrency = bean.xhttpXmuxMaxConcurrency
@@ -176,6 +189,7 @@ fun EwpBean.toUri(): String {
         .username(uuid)
         .host(serverAddress)
         .port(serverPort)
+    val browserXhttp = type == "xhttp" && xhttpBrowser == true
 
     if (!name.isNullOrBlank()) {
         builder.encodedFragment(name.urlSafe())
@@ -190,23 +204,40 @@ fun EwpBean.toUri(): String {
     if (host.isNotBlank()) builder.addQueryParameter("host", host)
     if (path.isNotBlank()) builder.addQueryParameter("path", path)
 
-    if (type == "xhttp" && xhttpMode.isNotBlank() && xhttpMode != "auto") {
-        builder.addQueryParameter("mode", xhttpMode)
+    if (type == "xhttp") {
+        val mode = if (browserXhttp) {
+            xhttpMode.takeIf { it == "packet-up" || it == "stream-up" } ?: "packet-up"
+        } else {
+            xhttpMode
+        }
+        if (mode.isNotBlank() && mode != "auto") builder.addQueryParameter("mode", mode)
+    }
+
+    if (browserXhttp) {
+        builder.addQueryParameter("browser", "1")
     }
 
     if (sni.isNotBlank()) builder.addQueryParameter("sni", sni)
-    if (alpn.isNotBlank()) builder.addQueryParameter("alpn", alpn)
-    if (utlsFingerprint.isNotBlank()) builder.addQueryParameter("fp", utlsFingerprint)
-    if (allowInsecure) builder.addQueryParameter("insecure", "1")
+    if (alpn.isNotBlank() && !browserXhttp) builder.addQueryParameter("alpn", alpn)
+    if (utlsFingerprint.isNotBlank() && !browserXhttp) builder.addQueryParameter("fp", utlsFingerprint)
+    if (allowInsecure && !browserXhttp) builder.addQueryParameter("insecure", "1")
 
-    if (enableECH) {
+    if (realityPubKey.isNotBlank()) {
+        builder.addQueryParameter("rpk", realityPubKey)
+        if (realityShortId.isNotBlank()) builder.addQueryParameter("rsid", realityShortId)
+    }
+    if (certificates.isNotBlank() && !(browserXhttp && realityPubKey.isNotBlank())) {
+        builder.addQueryParameter("cert", certificates)
+    }
+
+    if (enableECH && realityPubKey.isBlank()) {
         builder.addQueryParameter("ech", "1")
         if (echConfig.isNotBlank()) builder.addQueryParameter("echCfg", echConfig.replace("\n", "|"))
         if (echQueryServerName.isNotBlank()) builder.addQueryParameter("echQs", echQueryServerName)
     }
 
-    if (tlsFragment) builder.addQueryParameter("frag", "1")
-    if (tlsRecordFragment) builder.addQueryParameter("rfrag", "1")
+    if (tlsFragment && !browserXhttp) builder.addQueryParameter("frag", "1")
+    if (tlsRecordFragment && !browserXhttp) builder.addQueryParameter("rfrag", "1")
 
     return builder.toLink("ewp")
 }
@@ -234,10 +265,14 @@ fun parseEwp(url: String): EwpBean {
 
         if (type == "xhttp") {
             xhttpMode = link.queryParameter("mode") ?: "auto"
+            link.queryParameter("browser")?.also {
+                xhttpBrowser = it == "1" || it == "true"
+            }
         }
 
         sni = link.queryParameter("sni") ?: ""
         alpn = link.queryParameter("alpn") ?: ""
+        certificates = link.queryParameter("cert") ?: ""
         utlsFingerprint = link.queryParameter("fp") ?: ""
         link.queryParameter("insecure")?.also {
             allowInsecure = it == "1" || it == "true"
@@ -255,5 +290,7 @@ fun parseEwp(url: String): EwpBean {
         link.queryParameter("rfrag")?.also {
             tlsRecordFragment = it == "1" || it == "true"
         }
+        realityPubKey = link.queryParameter("rpk") ?: ""
+        realityShortId = link.queryParameter("rsid") ?: ""
     }
 }

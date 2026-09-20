@@ -61,6 +61,49 @@ class ConfigBuildResult(
     data class IndexEntity(var chain: LinkedHashMap<Int, ProxyEntity>)
 }
 
+internal fun sanitizeBrowserXHTTPOutboundJson(json: String): String {
+    if (json.isBlank()) return json
+    val map = runCatching {
+        @Suppress("UNCHECKED_CAST")
+        gson.fromJson(json, MutableMap::class.java) as? MutableMap<String, Any?>
+    }.getOrNull() ?: return json
+
+    @Suppress("UNCHECKED_CAST")
+    fun child(name: String): MutableMap<String, Any?>? =
+        map[name] as? MutableMap<String, Any?>
+
+    child("transport")?.apply {
+        remove("browser")
+        remove("type")
+        remove("mode")
+        remove("xmux")
+    }
+    child("tls")?.apply {
+        listOf(
+            "insecure",
+            "utls",
+            "fragment",
+            "record_fragment",
+            "spoof",
+            "spoof_method",
+            "disable_sni",
+            "min_version",
+            "max_version",
+            "cipher_suites",
+            "curve_preferences",
+            "certificate_public_key_sha256",
+            "client_certificate",
+            "client_certificate_path",
+            "client_key",
+            "client_key_path",
+            "kernel_tx",
+            "kernel_rx",
+            "alpn",
+        ).forEach(::remove)
+    }
+    return gson.toJson(map)
+}
+
 fun buildConfig(
     proxy: ProxyEntity, forTest: Boolean = false, forExport: Boolean = false
 ): ConfigBuildResult {
@@ -490,7 +533,16 @@ fun buildConfig(
                     }
                     _hack_config_map["tag"] = tagOut
 
-                    _hack_custom_config = bean.customOutboundJson
+                    val browserXhttp = when (bean) {
+                        is StandardV2RayBean -> bean.isVLESS && bean.type == "xhttp" && bean.xhttpBrowser == true
+                        is EwpBean -> bean.type == "xhttp" && bean.xhttpBrowser == true
+                        else -> false
+                    }
+                    _hack_custom_config = if (browserXhttp) {
+                        sanitizeBrowserXHTTPOutboundJson(bean.customOutboundJson)
+                    } else {
+                        bean.customOutboundJson
+                    }
                 }
 
                 // External proxy need a dokodemo-door inbound to forward the traffic

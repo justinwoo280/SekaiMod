@@ -70,6 +70,8 @@ public class EwpBean extends AbstractBean {
     public String path;
 
     // --------------------------------------- xhttp
+    public Boolean xhttpBrowser;
+
     public String xhttpMode;
     public String xhttpPaddingBytes;
     public String xhttpXmuxMaxConcurrency;
@@ -120,6 +122,7 @@ public class EwpBean extends AbstractBean {
         if (host == null) host = "";
         if (path == null) path = "";
 
+        if (xhttpBrowser == null) xhttpBrowser = false;
         if (xhttpMode == null || xhttpMode.isEmpty()) xhttpMode = "auto";
         if (xhttpPaddingBytes == null) xhttpPaddingBytes = "";
         if (xhttpXmuxMaxConcurrency == null) xhttpXmuxMaxConcurrency = "";
@@ -161,7 +164,8 @@ public class EwpBean extends AbstractBean {
         // v2: + xhttp transport fields
         // v3: EWP/v2.3 — replaced serverStaticPubKey with
         //     serverPublicKey (Ed25519) + serverId + routeEpoch
-        output.writeInt(3);
+        // v4: + Browser XHTTP transport switch
+        output.writeInt(4);
         super.serialize(output);
 
         output.writeString(uuid);
@@ -173,6 +177,7 @@ public class EwpBean extends AbstractBean {
         output.writeString(host);
         output.writeString(path);
 
+        output.writeBoolean(Boolean.TRUE.equals(xhttpBrowser));
         output.writeString(xhttpMode);
         output.writeString(xhttpPaddingBytes);
         output.writeString(xhttpXmuxMaxConcurrency);
@@ -234,6 +239,11 @@ public class EwpBean extends AbstractBean {
         path = input.readString();
 
         if (version >= 2) {
+            if (version >= 4) {
+                xhttpBrowser = input.readBoolean();
+            } else {
+                xhttpBrowser = false;
+            }
             xhttpMode = input.readString();
             xhttpPaddingBytes = input.readString();
             xhttpXmuxMaxConcurrency = input.readString();

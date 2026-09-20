@@ -241,6 +241,9 @@ fun StandardV2RayBean.parseDuckSoft(url: HttpUrl) {
             url.queryParameter("host")?.let { host = it }
             url.queryParameter("path")?.let { path = it }
             url.queryParameter("mode")?.let { xhttpMode = it }
+            url.queryParameter("browser")?.let {
+                xhttpBrowser = it == "1" || it == "true"
+            }
         }
     }
 
@@ -455,6 +458,7 @@ fun StandardV2RayBean.toUriVMessVLESSTrojan(isTrojan: Boolean): String {
         .host(serverAddress)
         .port(serverPort)
         .addQueryParameter("type", type)
+    val browserXhttp = isVLESS && type == "xhttp" && xhttpBrowser == true
 
     if (isVLESS) {
         builder.addQueryParameter("encryption", "none")
@@ -492,8 +496,16 @@ fun StandardV2RayBean.toUriVMessVLESSTrojan(isTrojan: Boolean): String {
         "xhttp" -> {
             if (host.isNotBlank()) builder.addQueryParameter("host", host)
             if (path.isNotBlank()) builder.addQueryParameter("path", path)
-            if (xhttpMode.isNotBlank() && xhttpMode != "auto") {
-                builder.addQueryParameter("mode", xhttpMode)
+            val mode = if (browserXhttp) {
+                xhttpMode.takeIf { it == "packet-up" || it == "stream-up" } ?: "packet-up"
+            } else {
+                xhttpMode
+            }
+            if (mode.isNotBlank() && mode != "auto") {
+                builder.addQueryParameter("mode", mode)
+            }
+            if (browserXhttp) {
+                builder.addQueryParameter("browser", "1")
             }
         }
     }
@@ -505,16 +517,16 @@ fun StandardV2RayBean.toUriVMessVLESSTrojan(isTrojan: Boolean): String {
                 if (sni.isNotBlank()) {
                     builder.addQueryParameter("sni", sni)
                 }
-                if (alpn.isNotBlank()) {
+                if (alpn.isNotBlank() && !browserXhttp) {
                     builder.addQueryParameter("alpn", alpn.replace("\n", ","))
                 }
-                if (certificates.isNotBlank()) {
+                if (certificates.isNotBlank() && !(browserXhttp && realityPubKey.isNotBlank())) {
                     builder.addQueryParameter("cert", certificates)
                 }
-                if (allowInsecure) {
+                if (allowInsecure && !browserXhttp) {
                     builder.addQueryParameter("allowInsecure", "1")
                 }
-                if (utlsFingerprint.isNotBlank()) {
+                if (utlsFingerprint.isNotBlank() && !browserXhttp) {
                     builder.addQueryParameter("fp", utlsFingerprint)
                 }
                 if (realityPubKey.isNotBlank()) {
@@ -617,19 +629,25 @@ fun buildSingBoxOutboundStreamSettings(bean: StandardV2RayBean): V2RayTransportO
         }
 
         "xhttp" -> {
+            val browser = bean.isVLESS && bean.xhttpBrowser == true
             return V2RayTransportOptions_XHTTPOptions().apply {
                 type = "xhttp"
-                mode = bean.xhttpMode.takeIf { it.isNotBlank() } ?: "auto"
+                this.browser = browser
+                mode = if (browser) {
+                    bean.xhttpMode.takeIf { it == "packet-up" || it == "stream-up" } ?: "packet-up"
+                } else {
+                    bean.xhttpMode.takeIf { it.isNotBlank() } ?: "auto"
+                }
                 if (bean.host.isNotBlank()) host = bean.host
                 if (bean.path.isNotBlank()) path = bean.path
                 if (bean.xhttpPaddingBytes.isNotBlank()) x_padding_bytes = bean.xhttpPaddingBytes
 
-                val hasXmux = bean.xhttpXmuxMaxConcurrency.isNotBlank() ||
+                val hasXmux = !browser && (bean.xhttpXmuxMaxConcurrency.isNotBlank() ||
                     bean.xhttpXmuxMaxConnections.isNotBlank() ||
                     bean.xhttpXmuxCMaxReuseTimes.isNotBlank() ||
                     bean.xhttpXmuxHMaxRequestTimes.isNotBlank() ||
                     bean.xhttpXmuxHMaxReusableSecs.isNotBlank() ||
-                    (bean.xhttpXmuxHKeepAlivePeriod != null && bean.xhttpXmuxHKeepAlivePeriod > 0)
+                    (bean.xhttpXmuxHKeepAlivePeriod != null && bean.xhttpXmuxHKeepAlivePeriod > 0))
                 if (hasXmux) {
                     xmux = V2RayXHTTPXmuxOptions().apply {
                         if (bean.xhttpXmuxMaxConcurrency.isNotBlank()) max_concurrency = bean.xhttpXmuxMaxConcurrency
@@ -651,17 +669,22 @@ fun buildSingBoxOutboundStreamSettings(bean: StandardV2RayBean): V2RayTransportO
 
 fun buildSingBoxOutboundTLS(bean: StandardV2RayBean): OutboundTLSOptions? {
     if (bean.security != "tls") return null
+    val browser = bean.isVLESS && bean.type == "xhttp" && bean.xhttpBrowser == true
+    val browserReality = browser && bean.realityPubKey.isNotBlank()
     return OutboundTLSOptions().apply {
         enabled = true
-        insecure = bean.allowInsecure || DataStore.globalAllowInsecure
+        insecure = !browser && (bean.allowInsecure || DataStore.globalAllowInsecure)
         if (bean.sni.isNotBlank()) server_name = bean.sni
-        if (bean.alpn.isNotBlank()) alpn = bean.alpn.listByLineOrComma()
-        if (bean.certificates.isNotBlank()) certificate = bean.certificates
+        if (bean.alpn.isNotBlank()) {
+            val requestedAlpn = bean.alpn.listByLineOrComma()
+            if (!browser || requestedAlpn == listOf("h2", "http/1.1")) alpn = requestedAlpn
+        }
+        if (bean.certificates.isNotBlank() && !browserReality) certificate = bean.certificates
         // REALITY and uTLS are TCP/TLS-only: QUIC-class transports (v2ray
         // "quic") carry their own TLS inside QUIC and cannot apply either
         // (kernel rejects/ignores them). Never emit them there.
         val isQuicTransport = bean.type == "quic"
-        var fp = bean.utlsFingerprint
+        var fp = if (browser) null else bean.utlsFingerprint
         if (!isQuicTransport && bean.realityPubKey.isNotBlank()) {
             reality = OutboundRealityOptions().apply {
                 enabled = true
@@ -670,13 +693,13 @@ fun buildSingBoxOutboundTLS(bean: StandardV2RayBean): OutboundTLSOptions? {
             }
             if (fp.isNullOrBlank()) fp = "chrome"
         }
-        if (!isQuicTransport && fp.isNotBlank()) {
+        if (!isQuicTransport && !browser && fp?.isNotBlank() == true) {
             utls = OutboundUTLSOptions().apply {
                 enabled = true
-                fingerprint = fp
+                fingerprint = fp!!
             }
         }
-        if (bean.enableECH) {
+        if (bean.enableECH && bean.realityPubKey.isBlank()) {
             ech = OutboundECHOptions().apply {
                 enabled = true
                 if (bean.echConfig.isNotBlank()) {

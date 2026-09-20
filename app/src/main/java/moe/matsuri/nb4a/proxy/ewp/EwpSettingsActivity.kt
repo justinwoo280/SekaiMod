@@ -11,6 +11,7 @@ import io.nekohasekai.sagernet.ui.profile.ProfileSettingsActivity
 import moe.matsuri.nb4a.proxy.PreferenceBinding
 import moe.matsuri.nb4a.proxy.PreferenceBindingManager
 import moe.matsuri.nb4a.proxy.Type
+import moe.matsuri.nb4a.ui.SimpleMenuPreference
 
 class EwpSettingsActivity : ProfileSettingsActivity<EwpBean>() {
     override fun createEntity() = EwpBean().applyDefaultValues()
@@ -28,6 +29,7 @@ class EwpSettingsActivity : ProfileSettingsActivity<EwpBean>() {
     private val host = pbm.add(PreferenceBinding(Type.Text, "host"))
     private val path = pbm.add(PreferenceBinding(Type.Text, "path"))
 
+    private val xhttpBrowser = pbm.add(PreferenceBinding(Type.Bool, "xhttpBrowser"))
     private val xhttpMode = pbm.add(PreferenceBinding(Type.Text, "xhttpMode"))
     private val xhttpPaddingBytes = pbm.add(PreferenceBinding(Type.Text, "xhttpPaddingBytes"))
     private val xhttpXmuxMaxConcurrency = pbm.add(PreferenceBinding(Type.Text, "xhttpXmuxMaxConcurrency"))
@@ -70,6 +72,7 @@ class EwpSettingsActivity : ProfileSettingsActivity<EwpBean>() {
         rootKey: String?
     ) {
         addPreferencesFromResource(R.xml.ewp_preferences)
+        pbm.setPreferenceFragment(this)
 
         findPreference<EditTextPreference>(Key.SERVER_PORT)!!.apply {
             setOnBindEditTextListener(EditTextPreferenceModifiers.Port)
@@ -80,10 +83,44 @@ class EwpSettingsActivity : ProfileSettingsActivity<EwpBean>() {
 
         val xhttpCategory = findPreference<androidx.preference.PreferenceCategory>("serverXhttpCategory")
         val xhttpXmuxCategory = findPreference<androidx.preference.PreferenceCategory>("serverXhttpXmuxCategory")
+        val modePreference = xhttpMode.preference as SimpleMenuPreference
+        var currentNetwork = type.readStringFromCache()
+        var currentBrowser = xhttpBrowser.readBoolFromCache()
+        var xhttpModeBeforeBrowser = ""
+
+        fun updateBrowserView() {
+            val browser = currentBrowser && currentNetwork == "xhttp"
+            if (currentBrowser) {
+                modePreference.setEntries(R.array.xhttp_browser_mode_entry)
+                modePreference.setEntryValues(R.array.xhttp_browser_mode_value)
+                val mode = xhttpMode.readStringFromCache()
+                if (mode != "packet-up" && mode != "stream-up") {
+                    if (xhttpModeBeforeBrowser.isBlank()) xhttpModeBeforeBrowser = mode
+                    modePreference.value = "packet-up"
+                }
+            } else {
+                modePreference.setEntries(R.array.xhttp_mode_entry)
+                modePreference.setEntryValues(R.array.xhttp_mode_value)
+                if (xhttpModeBeforeBrowser.isNotBlank()) {
+                    modePreference.value = xhttpModeBeforeBrowser
+                    xhttpModeBeforeBrowser = ""
+                }
+            }
+
+            xhttpXmuxCategory?.isEnabled = !browser
+            allowInsecure.preference.isEnabled = !browser
+            alpn.preference.isEnabled = !browser
+            utlsFingerprint.preference.isEnabled = !browser
+            tlsFragment.preference.isEnabled = !browser
+            tlsRecordFragment.preference.isEnabled = !browser
+        }
 
         fun updateTransportView(network: String) {
+            currentNetwork = network
             xhttpCategory?.isVisible = network == "xhttp"
             xhttpXmuxCategory?.isVisible = network == "xhttp"
+            xhttpBrowser.preference.isVisible = true
+            updateBrowserView()
         }
 
         updateTransportView(type.readStringFromCache())
@@ -92,6 +129,12 @@ class EwpSettingsActivity : ProfileSettingsActivity<EwpBean>() {
             updateTransportView(newValue as String)
             true
         }
+        xhttpBrowser.preference.setOnPreferenceChangeListener { _, newValue ->
+            currentBrowser = newValue as Boolean
+            updateBrowserView()
+            true
+        }
+        updateBrowserView()
 
         // Show the library defaults that apply when the tuning fields are left
         // unset. Values are Xray-aligned and uniform across modes.
