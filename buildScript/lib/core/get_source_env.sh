@@ -34,5 +34,5 @@
 #     platform.Interface) re-applied; oomprofile parses /proc/self/maps
 #     locally instead of linkname'ing runtime/pprof internals (Go 1.26
 #     rejects pull-mode linkname); CI follows the fork's 1.13.x workflows.
-export COMMIT_SING_BOX="c4da22ceb78991d8650f6bc07b310c7841c40dc9"
+export COMMIT_SING_BOX="d871f3cb979f2ff724778bce4ad9bb79640b4fa4"
 export COMMIT_LIBNEKO="1c47a3af71990a7b2192e03292b4d246c308ef0b"
