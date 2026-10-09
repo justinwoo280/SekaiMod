@@ -7,6 +7,7 @@ import androidx.preference.PreferenceFragmentCompat
 import io.nekohasekai.sagernet.Key
 import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.database.preference.EditTextPreferenceModifiers
+import io.nekohasekai.sagernet.fmt.resolveXHTTPMode
 import io.nekohasekai.sagernet.fmt.http.HttpBean
 import io.nekohasekai.sagernet.fmt.trojan.TrojanBean
 import io.nekohasekai.sagernet.fmt.v2ray.StandardV2RayBean
@@ -55,6 +56,7 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
 
     private val xhttpMode = pbm.add(PreferenceBinding(Type.Text, "xhttpMode"))
     private val xhttpBrowser = pbm.add(PreferenceBinding(Type.Bool, "xhttpBrowser"))
+    private val xhttpGRPCFraming = pbm.add(PreferenceBinding(Type.Bool, "xhttpGRPCFraming"))
     private val xhttpPaddingBytes = pbm.add(PreferenceBinding(Type.Text, "xhttpPaddingBytes"))
     private val xhttpXmuxMaxConcurrency = pbm.add(PreferenceBinding(Type.Text, "xhttpXmuxMaxConcurrency"))
     private val xhttpXmuxMaxConnections = pbm.add(PreferenceBinding(Type.Text, "xhttpXmuxMaxConnections"))
@@ -104,6 +106,7 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
         val isVless = tmpBean?.isVLESS == true
         browserCapable = isVless
         currentBrowser = browserCapable && xhttpBrowser.readBoolFromCache()
+        currentGRPCFraming = xhttpGRPCFraming.readBoolFromCache()
 
         serverPort.preference.apply {
             this as EditTextPreference
@@ -170,6 +173,15 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
         xhttpBrowser.preference.setOnPreferenceChangeListener { _, newValue ->
             currentBrowser = newValue as Boolean
             updateBrowserView()
+            true
+        }
+        xhttpGRPCFraming.preference.setOnPreferenceChangeListener { _, newValue ->
+            currentGRPCFraming = newValue as Boolean
+            updateBrowserView()
+            true
+        }
+        xhttpMode.preference.setOnPreferenceChangeListener { _, _ ->
+            view?.post { updateBrowserView() }
             true
         }
         updateBrowserView()
@@ -275,7 +287,8 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
     private var currentSecurityType: String = ""
     private var browserCapable: Boolean = false
     private var currentBrowser: Boolean = false
-    private var xhttpModeBeforeBrowser: String = ""
+    private var currentGRPCFraming: Boolean = false
+    private var xhttpModeBeforeRestriction: String = ""
 
     private fun updateCamouflageVisibility() {
         val isTLS = "tls" in currentSecurityType
@@ -286,21 +299,36 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
         val browser = browserCapable && currentBrowser && currentNetworkType == "xhttp"
         val modePreference = xhttpMode.preference as SimpleMenuPreference
 
-        if (browserCapable && currentBrowser) {
+        if (currentGRPCFraming) {
+            modePreference.setEntries(R.array.xhttp_grpc_mode_entry)
+            modePreference.setEntryValues(R.array.xhttp_grpc_mode_value)
+        } else if (browserCapable && currentBrowser) {
             modePreference.setEntries(R.array.xhttp_browser_mode_entry)
             modePreference.setEntryValues(R.array.xhttp_browser_mode_value)
-            val mode = xhttpMode.readStringFromCache()
-            if (mode != "packet-up" && mode != "stream-up") {
-                if (xhttpModeBeforeBrowser.isBlank()) xhttpModeBeforeBrowser = mode
-                modePreference.value = "packet-up"
-            }
         } else {
             modePreference.setEntries(R.array.xhttp_mode_entry)
             modePreference.setEntryValues(R.array.xhttp_mode_value)
-            if (xhttpModeBeforeBrowser.isNotBlank()) {
-                modePreference.value = xhttpModeBeforeBrowser
-                xhttpModeBeforeBrowser = ""
+        }
+        if (!currentBrowser && !currentGRPCFraming && xhttpModeBeforeRestriction.isNotBlank()) {
+            modePreference.value = xhttpModeBeforeRestriction
+            xhttpModeBeforeRestriction = ""
+        } else {
+            val mode = xhttpMode.readStringFromCache()
+            val resolved = resolveXHTTPMode(mode, browserCapable && currentBrowser, currentGRPCFraming)
+            if (mode != resolved) {
+                if (xhttpModeBeforeRestriction.isBlank()) xhttpModeBeforeRestriction = mode
             }
+            // The same mode can have a different index after changing lists.
+            modePreference.value = resolved
+        }
+        if (currentNetworkType == "xhttp") {
+            path.preference.setTitle(if (currentGRPCFraming) R.string.grpc_service_name else R.string.xhttp_path)
+        }
+        val requiresBrowserTLS = browser && (currentGRPCFraming || modePreference.value == "stream-one")
+        security.preference.isEnabled = !requiresBrowserTLS
+        if (requiresBrowserTLS && currentSecurityType != "tls") {
+            (security.preference as SimpleMenuPreference).value = "tls"
+            updateTls("tls")
         }
 
         xhttpXmuxCategory.isEnabled = !browser

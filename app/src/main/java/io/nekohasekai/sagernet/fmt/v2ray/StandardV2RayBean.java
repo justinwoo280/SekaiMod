@@ -71,6 +71,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
     // --------------------------------------- xhttp
 
     public Boolean xhttpBrowser;
+    public Boolean xhttpGRPCFraming;
 
     public String xhttpMode;
     public String xhttpPaddingBytes;
@@ -126,6 +127,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
         if (muxConcurrency == null) muxConcurrency = 1;
 
         if (xhttpBrowser == null) xhttpBrowser = false;
+        if (xhttpGRPCFraming == null) xhttpGRPCFraming = false;
         if (JavaUtil.isNullOrBlank(xhttpMode)) xhttpMode = "auto";
         if (xhttpPaddingBytes == null) xhttpPaddingBytes = "";
         if (xhttpXmuxMaxConcurrency == null) xhttpXmuxMaxConcurrency = "";
@@ -138,7 +140,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
 
     @Override
     public void serialize(ByteBufferOutput output) {
-        output.writeInt(7);
+        output.writeInt(8);
         super.serialize(output);
         output.writeString(uuid);
         output.writeString(encryption);
@@ -206,6 +208,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
         output.writeBoolean(muxPadding);
         output.writeInt(muxType);
         output.writeInt(muxConcurrency);
+        output.writeBoolean(Boolean.TRUE.equals(xhttpGRPCFraming));
     }
 
     @Override
@@ -318,6 +321,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
             muxType = input.readInt();
             muxConcurrency = input.readInt();
         }
+        xhttpGRPCFraming = version >= 8 && input.readBoolean();
     }
 
     public boolean isVLESS() {

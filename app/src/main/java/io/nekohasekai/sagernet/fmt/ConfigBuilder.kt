@@ -76,6 +76,7 @@ internal fun sanitizeBrowserXHTTPOutboundJson(json: String): String {
         remove("browser")
         remove("type")
         remove("mode")
+        remove("grpc_framing")
         remove("xmux")
     }
     child("tls")?.apply {

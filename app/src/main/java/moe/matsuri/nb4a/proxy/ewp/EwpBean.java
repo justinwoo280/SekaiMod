@@ -71,6 +71,7 @@ public class EwpBean extends AbstractBean {
 
     // --------------------------------------- xhttp
     public Boolean xhttpBrowser;
+    public Boolean xhttpGRPCFraming;
 
     public String xhttpMode;
     public String xhttpPaddingBytes;
@@ -123,6 +124,7 @@ public class EwpBean extends AbstractBean {
         if (path == null) path = "";
 
         if (xhttpBrowser == null) xhttpBrowser = false;
+        if (xhttpGRPCFraming == null) xhttpGRPCFraming = false;
         if (xhttpMode == null || xhttpMode.isEmpty()) xhttpMode = "auto";
         if (xhttpPaddingBytes == null) xhttpPaddingBytes = "";
         if (xhttpXmuxMaxConcurrency == null) xhttpXmuxMaxConcurrency = "";
@@ -165,7 +167,8 @@ public class EwpBean extends AbstractBean {
         // v3: EWP/v2.3 — replaced serverStaticPubKey with
         //     serverPublicKey (Ed25519) + serverId + routeEpoch
         // v4: + Browser XHTTP transport switch
-        output.writeInt(4);
+        // v5: + optional gRPC framing
+        output.writeInt(5);
         super.serialize(output);
 
         output.writeString(uuid);
@@ -209,6 +212,7 @@ public class EwpBean extends AbstractBean {
         output.writeInt(muxConcurrency);
 
         output.writeInt(packetEncoding);
+        output.writeBoolean(Boolean.TRUE.equals(xhttpGRPCFraming));
     }
 
     @Override
@@ -285,6 +289,7 @@ public class EwpBean extends AbstractBean {
         muxConcurrency = input.readInt();
 
         packetEncoding = input.readInt();
+        xhttpGRPCFraming = version >= 5 && input.readBoolean();
     }
 
     @NotNull

@@ -4690,6 +4690,8 @@ public class SingBoxOptions {
 
         public Boolean no_sse_header;
 
+        public Boolean grpc_framing;
+
         public String sc_max_each_post_bytes;
 
         public String sc_min_posts_interval_ms;

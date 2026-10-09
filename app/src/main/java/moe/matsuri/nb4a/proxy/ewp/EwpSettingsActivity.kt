@@ -6,6 +6,7 @@ import androidx.preference.PreferenceFragmentCompat
 import io.nekohasekai.sagernet.Key
 import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.database.preference.EditTextPreferenceModifiers
+import io.nekohasekai.sagernet.fmt.resolveXHTTPMode
 import io.nekohasekai.sagernet.ktx.applyDefaultValues
 import io.nekohasekai.sagernet.ui.profile.ProfileSettingsActivity
 import moe.matsuri.nb4a.proxy.PreferenceBinding
@@ -30,6 +31,7 @@ class EwpSettingsActivity : ProfileSettingsActivity<EwpBean>() {
     private val path = pbm.add(PreferenceBinding(Type.Text, "path"))
 
     private val xhttpBrowser = pbm.add(PreferenceBinding(Type.Bool, "xhttpBrowser"))
+    private val xhttpGRPCFraming = pbm.add(PreferenceBinding(Type.Bool, "xhttpGRPCFraming"))
     private val xhttpMode = pbm.add(PreferenceBinding(Type.Text, "xhttpMode"))
     private val xhttpPaddingBytes = pbm.add(PreferenceBinding(Type.Text, "xhttpPaddingBytes"))
     private val xhttpXmuxMaxConcurrency = pbm.add(PreferenceBinding(Type.Text, "xhttpXmuxMaxConcurrency"))
@@ -86,25 +88,37 @@ class EwpSettingsActivity : ProfileSettingsActivity<EwpBean>() {
         val modePreference = xhttpMode.preference as SimpleMenuPreference
         var currentNetwork = type.readStringFromCache()
         var currentBrowser = xhttpBrowser.readBoolFromCache()
-        var xhttpModeBeforeBrowser = ""
+        var currentGRPCFraming = xhttpGRPCFraming.readBoolFromCache()
+        var xhttpModeBeforeRestriction = ""
 
         fun updateBrowserView() {
             val browser = currentBrowser && currentNetwork == "xhttp"
-            if (currentBrowser) {
+            if (currentGRPCFraming) {
+                modePreference.setEntries(R.array.xhttp_grpc_mode_entry)
+                modePreference.setEntryValues(R.array.xhttp_grpc_mode_value)
+            } else if (currentBrowser) {
                 modePreference.setEntries(R.array.xhttp_browser_mode_entry)
                 modePreference.setEntryValues(R.array.xhttp_browser_mode_value)
-                val mode = xhttpMode.readStringFromCache()
-                if (mode != "packet-up" && mode != "stream-up") {
-                    if (xhttpModeBeforeBrowser.isBlank()) xhttpModeBeforeBrowser = mode
-                    modePreference.value = "packet-up"
-                }
             } else {
                 modePreference.setEntries(R.array.xhttp_mode_entry)
                 modePreference.setEntryValues(R.array.xhttp_mode_value)
-                if (xhttpModeBeforeBrowser.isNotBlank()) {
-                    modePreference.value = xhttpModeBeforeBrowser
-                    xhttpModeBeforeBrowser = ""
+            }
+            if (!currentBrowser && !currentGRPCFraming && xhttpModeBeforeRestriction.isNotBlank()) {
+                modePreference.value = xhttpModeBeforeRestriction
+                xhttpModeBeforeRestriction = ""
+            } else {
+                val mode = xhttpMode.readStringFromCache()
+                val resolved = resolveXHTTPMode(mode, currentBrowser, currentGRPCFraming)
+                if (mode != resolved) {
+                    if (xhttpModeBeforeRestriction.isBlank()) xhttpModeBeforeRestriction = mode
                 }
+                // The same mode can have a different index after changing lists.
+                modePreference.value = resolved
+            }
+            if (currentNetwork == "xhttp") {
+                path.preference.setTitle(if (currentGRPCFraming) R.string.grpc_service_name else R.string.xhttp_path)
+            } else {
+                path.preference.setTitle(R.string.path)
             }
 
             xhttpXmuxCategory?.isEnabled = !browser
@@ -132,6 +146,15 @@ class EwpSettingsActivity : ProfileSettingsActivity<EwpBean>() {
         xhttpBrowser.preference.setOnPreferenceChangeListener { _, newValue ->
             currentBrowser = newValue as Boolean
             updateBrowserView()
+            true
+        }
+        xhttpGRPCFraming.preference.setOnPreferenceChangeListener { _, newValue ->
+            currentGRPCFraming = newValue as Boolean
+            updateBrowserView()
+            true
+        }
+        modePreference.setOnPreferenceChangeListener { _, _ ->
+            view?.post { updateBrowserView() }
             true
         }
         updateBrowserView()

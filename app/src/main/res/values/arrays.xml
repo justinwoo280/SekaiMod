@@ -293,11 +293,23 @@
     <string-array name="xhttp_browser_mode_entry">
         <item>Packet Up</item>
         <item>Stream Up</item>
+        <item>Stream One</item>
     </string-array>
 
     <string-array name="xhttp_browser_mode_value">
         <item>packet-up</item>
         <item>stream-up</item>
+        <item>stream-one</item>
+    </string-array>
+
+    <string-array name="xhttp_grpc_mode_entry">
+        <item>Stream Up</item>
+        <item>Stream One</item>
+    </string-array>
+
+    <string-array name="xhttp_grpc_mode_value">
+        <item>stream-up</item>
+        <item>stream-one</item>
     </string-array>
 
     <string-array name="trojan_go_networks_entry">

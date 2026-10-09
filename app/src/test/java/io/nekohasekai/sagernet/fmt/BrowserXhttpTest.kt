@@ -1,5 +1,7 @@
 package io.nekohasekai.sagernet.fmt
 
+import com.esotericsoftware.kryo.io.ByteBufferInput
+import com.esotericsoftware.kryo.io.ByteBufferOutput
 import io.nekohasekai.sagernet.fmt.v2ray.VMessBean
 import io.nekohasekai.sagernet.fmt.v2ray.buildSingBoxOutboundStandardV2RayBean
 import io.nekohasekai.sagernet.fmt.v2ray.parseDuckSoft
@@ -62,6 +64,10 @@ class BrowserXhttpTest {
         for (bean in beans) {
             bean.name = "Browser profile"
             bean.customOutboundJson = "{\"detour\":\"direct\"}"
+            when (bean) {
+                is VMessBean -> bean.xhttpGRPCFraming = true
+                is EwpBean -> bean.xhttpGRPCFraming = true
+            }
             val restored = bean.clone()
             assertEquals(gson.toJson(bean), gson.toJson(restored))
         }
@@ -69,6 +75,8 @@ class BrowserXhttpTest {
         assertTrue(ewp().clone().xhttpBrowser)
         assertFalse(VMessBean().apply { initializeDefaultValues() }.xhttpBrowser)
         assertFalse(EwpBean().apply { initializeDefaultValues() }.xhttpBrowser)
+        assertFalse(VMessBean().apply { initializeDefaultValues() }.xhttpGRPCFraming)
+        assertFalse(EwpBean().apply { initializeDefaultValues() }.xhttpGRPCFraming)
     }
 
     @Test fun browserNormalizesModesAndDropsIncompatibleSettings() {
@@ -80,12 +88,76 @@ class BrowserXhttpTest {
             for (transport in listOf(standard.transport, ewp.transport)) {
                 transport as V2RayTransportOptions_XHTTPOptions
                 assertTrue(transport.browser)
-                assertEquals(if (mode == "stream-up") mode else "packet-up", transport.mode)
+                assertEquals(if (mode == "auto") "packet-up" else mode, transport.mode)
+                assertNull(transport.grpc_framing)
                 assertNull(transport.xmux)
             }
             assertBrowserTls(standard.tls)
             assertBrowserTls(ewp.tls)
         }
+    }
+
+    @Test fun framingSelectsStreamingModesForBothClients() {
+        for (browser in listOf(false, true)) {
+            for (mode in listOf("auto", "packet-up", "stream-up", "stream-one")) {
+                val standard = buildSingBoxOutboundStandardV2RayBean(vless().apply {
+                    xhttpBrowser = browser
+                    xhttpGRPCFraming = true
+                    xhttpMode = mode
+                }) as Outbound_VLESSOptions
+                val ewp = buildSingBoxOutboundEwpBean(ewp().apply {
+                    xhttpBrowser = browser
+                    xhttpGRPCFraming = true
+                    xhttpMode = mode
+                })
+                for (transport in listOf(standard.transport, ewp.transport)) {
+                    transport as V2RayTransportOptions_XHTTPOptions
+                    assertTrue(transport.grpc_framing)
+                    assertEquals(if (mode == "stream-up") mode else "stream-one", transport.mode)
+                }
+            }
+        }
+    }
+
+    private fun legacyBytes(bean: AbstractBean, version: Int): ByteArray {
+        val body = ByteBufferOutput(4096, -1).apply { bean.serialize(this) }.toBytes()
+        // Previous schemas have the same body except the final framing flag.
+        return ByteBufferOutput(4096, -1).apply {
+            writeInt(version)
+            writeBytes(body, 4, body.size - 5)
+            writeInt(1)
+            writeString(bean.name)
+            writeString(bean.customOutboundJson)
+            writeString(bean.customConfigJson)
+        }.toBytes()
+    }
+
+    @Test fun previousProfileSchemasKeepFieldsAndDefaultFramingOff() {
+        val standard = vless().apply {
+            name = "Legacy VLESS"
+            xhttpMode = "stream-up"
+            xhttpGRPCFraming = true
+            customOutboundJson = "{\"detour\":\"direct\"}"
+        }
+        val ewp = ewp().apply {
+            name = "Legacy EWP"
+            xhttpGRPCFraming = true
+            customConfigJson = "{\"log\":{\"level\":\"debug\"}}"
+        }
+        val restoredStandard = VMessBean().apply {
+            deserializeFromBuffer(ByteBufferInput(legacyBytes(standard, 7)))
+            initializeDefaultValues()
+        }
+        val restoredEwp = EwpBean().apply {
+            deserializeFromBuffer(ByteBufferInput(legacyBytes(ewp, 4)))
+            initializeDefaultValues()
+        }
+        assertFalse(restoredStandard.xhttpGRPCFraming)
+        assertFalse(restoredEwp.xhttpGRPCFraming)
+        standard.xhttpGRPCFraming = false
+        ewp.xhttpGRPCFraming = false
+        assertEquals(gson.toJson(standard), gson.toJson(restoredStandard))
+        assertEquals(gson.toJson(ewp), gson.toJson(restoredEwp))
     }
 
     @Test fun disablingBrowserPreservesOrdinaryXhttpSettings() {
@@ -199,5 +271,50 @@ class BrowserXhttpTest {
         assertFalse(tls.has("alpn"))
         assertEquals("custom.example.com", tls["server_name"].asString)
         assertEquals("direct", json["detour"].asString)
+    }
+
+    @Test fun framedLinksPreserveModeAndProtocol() {
+        for (browser in listOf(false, true)) {
+            for (mode in listOf("stream-up", "stream-one")) {
+                val standard = vless().apply {
+                    xhttpBrowser = browser
+                    xhttpGRPCFraming = true
+                    xhttpMode = mode
+                }
+                val link = standard.toUriVMessVLESSTrojan(false).replace("vless://", "https://").toHttpUrl()
+                val restored = VMessBean().apply {
+                    alterId = -1
+                    parseDuckSoft(link)
+                    initializeDefaultValues()
+                }
+                assertTrue(restored.xhttpGRPCFraming)
+                assertEquals(mode, restored.xhttpMode)
+                assertEquals(browser, restored.xhttpBrowser)
+                val ewp = ewp().apply {
+                    xhttpBrowser = browser
+                    xhttpGRPCFraming = true
+                    xhttpMode = mode
+                }
+                val restoredEwp = parseEwp(ewp.toUri()).apply { initializeDefaultValues() }
+                assertTrue(restoredEwp.xhttpGRPCFraming)
+                assertEquals(mode, restoredEwp.xhttpMode)
+                assertEquals(browser, restoredEwp.xhttpBrowser)
+                assertEquals(ewp.serverPublicKey, restoredEwp.serverPublicKey)
+            }
+        }
+    }
+
+    @Test fun customOverridesCannotDisableFraming() {
+        val outbound = buildSingBoxOutboundStandardV2RayBean(vless().apply {
+            xhttpMode = "stream-one"
+            xhttpGRPCFraming = true
+        }) as Outbound_VLESSOptions
+        outbound._hack_custom_config = sanitizeBrowserXHTTPOutboundJson("""
+            {"transport":{"browser":false,"mode":"packet-up","grpc_framing":false}}
+        """.trimIndent())
+        val transport = gson.toJsonTree(outbound.asMap()).asJsonObject.getAsJsonObject("transport")
+        assertTrue(transport["browser"].asBoolean)
+        assertTrue(transport["grpc_framing"].asBoolean)
+        assertEquals("stream-one", transport["mode"].asString)
     }
 }

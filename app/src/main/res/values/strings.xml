@@ -570,6 +570,7 @@
     <string name="xhttp_browser">Browser Dialer</string>
     <string name="xhttp_browser_summary">Use Cronet browser networking; disables Xmux and incompatible TLS tuning</string>
     <string name="xhttp_mode">XHTTP Mode</string>
+    <string name="xhttp_grpc_framing">gRPC Framing</string>
     <string name="xhttp_padding_bytes">Padding Bytes (from-to)</string>
     <string name="xhttp_mode_defaults_title">Defaults (when unset)</string>
     <string name="xhttp_defaults_summary">Max POST size: 1MB\nMin POST interval: 30 ms\nStream-up heartbeat: 20-80 s\nPadding: 100-1000 bytes</string>

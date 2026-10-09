@@ -74,6 +74,11 @@
             app:key="xhttpMode"
             app:title="@string/xhttp_mode"
             app:useSimpleSummaryProvider="true" />
+        <SwitchPreference
+            app:defaultValue="false"
+            app:icon="@drawable/ic_baseline_http_24"
+            app:key="xhttpGRPCFraming"
+            app:title="@string/xhttp_grpc_framing" />
         <Preference
             app:key="xhttpModeDefaultsInfo"
             app:persistent="false"

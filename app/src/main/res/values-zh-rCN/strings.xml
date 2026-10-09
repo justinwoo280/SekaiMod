@@ -500,5 +500,6 @@
     <string name="app_list_permission_denied">无法读取已安装的应用。\n这通常是由于系统限制了应用的读取权限（例如某些中国厂商系统）。\n请在系统设置中授予权限。</string>
     <string name="open_app_settings">打开系统设置</string>
     <string name="xhttp_mode_defaults_title">默认值（未填写时）</string>
+    <string name="xhttp_grpc_framing">gRPC 封装</string>
     <string name="xhttp_defaults_summary">单次 POST 上限：1MB\n最小 POST 间隔：30 毫秒\nstream-up 心跳：20-80 秒\n填充：100-1000 字节</string>
 </resources>

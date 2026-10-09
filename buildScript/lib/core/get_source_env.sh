@@ -1,4 +1,8 @@
 # sing-box mod 1.14.x line, which carries:
+#   - Browser XHTTP stream-one and opt-in protobuf/gRPC streaming framing;
+#     the default raw format stays compatible with stock Xray.
+#   - EWP UDP adapters preserve IPv4, IPv6 and domain destinations through
+#     both DialContext and ListenPacket.
 #   - EWP/v2.3.1 (sing-ewp v0.3.1): ticket-based 1-RTT resumption on top
 #     of v2.3 — servers mint rotating tickets after every handshake and
 #     clients with an in-memory store resume in 1 RTT (1.5-RTT to data)
@@ -34,5 +38,5 @@
 #     platform.Interface) re-applied; oomprofile parses /proc/self/maps
 #     locally instead of linkname'ing runtime/pprof internals (Go 1.26
 #     rejects pull-mode linkname); CI follows the fork's 1.13.x workflows.
-export COMMIT_SING_BOX="e3403a727e50855c090b812005fa2989c5c2633b"
+export COMMIT_SING_BOX="e733010012f96562bd1f13d3754758472c940931"
 export COMMIT_LIBNEKO="1c47a3af71990a7b2192e03292b4d246c308ef0b"

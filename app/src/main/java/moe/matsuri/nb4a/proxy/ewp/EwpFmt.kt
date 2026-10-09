@@ -1,6 +1,7 @@
 package moe.matsuri.nb4a.proxy.ewp
 
 import io.nekohasekai.sagernet.database.DataStore
+import io.nekohasekai.sagernet.fmt.resolveXHTTPMode
 import io.nekohasekai.sagernet.ktx.linkBuilder
 import io.nekohasekai.sagernet.ktx.toLink
 import io.nekohasekai.sagernet.ktx.urlSafe
@@ -140,11 +141,8 @@ private fun buildEwpTransport(bean: EwpBean): V2RayTransportOptions? {
             val browser = bean.xhttpBrowser == true
             type = "xhttp"
             this.browser = browser
-            mode = if (browser) {
-                bean.xhttpMode.takeIf { it == "packet-up" || it == "stream-up" } ?: "packet-up"
-            } else {
-                bean.xhttpMode.takeIf { it.isNotBlank() } ?: "auto"
-            }
+            mode = resolveXHTTPMode(bean.xhttpMode, browser, bean.xhttpGRPCFraming == true)
+            if (bean.xhttpGRPCFraming == true) grpc_framing = true
             if (bean.host.isNotBlank()) host = bean.host
             if (bean.path.isNotBlank()) path = bean.path
             if (bean.xhttpPaddingBytes.isNotBlank()) x_padding_bytes = bean.xhttpPaddingBytes
@@ -205,12 +203,9 @@ fun EwpBean.toUri(): String {
     if (path.isNotBlank()) builder.addQueryParameter("path", path)
 
     if (type == "xhttp") {
-        val mode = if (browserXhttp) {
-            xhttpMode.takeIf { it == "packet-up" || it == "stream-up" } ?: "packet-up"
-        } else {
-            xhttpMode
-        }
+        val mode = resolveXHTTPMode(xhttpMode, browserXhttp, xhttpGRPCFraming == true)
         if (mode.isNotBlank() && mode != "auto") builder.addQueryParameter("mode", mode)
+        if (xhttpGRPCFraming == true) builder.addQueryParameter("grpc_framing", "1")
     }
 
     if (browserXhttp) {
@@ -267,6 +262,9 @@ fun parseEwp(url: String): EwpBean {
             xhttpMode = link.queryParameter("mode") ?: "auto"
             link.queryParameter("browser")?.also {
                 xhttpBrowser = it == "1" || it == "true"
+            }
+            link.queryParameter("grpc_framing")?.also {
+                xhttpGRPCFraming = it == "1" || it == "true"
             }
         }
 

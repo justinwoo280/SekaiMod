@@ -19,9 +19,23 @@ import (
 // system-store registration in box.New.
 func TestBrowserAndroidSystemStoreConfig(t *testing.T) {
 	for _, protocol := range []string{"vless", "ewp"} {
-		for _, mode := range []string{"packet-up", "stream-up"} {
+		for _, stream := range []struct {
+			mode   string
+			framed bool
+		}{
+			{mode: "packet-up"},
+			{mode: "stream-up"},
+			{mode: "stream-one"},
+			{mode: "stream-up", framed: true},
+			{mode: "stream-one", framed: true},
+		} {
+			mode := stream.mode
+			name := mode
+			if stream.framed {
+				name += "/grpc"
+			}
 			for _, security := range []string{"tls", "ech", "reality"} {
-				t.Run(protocol+"/"+mode+"/"+security, func(t *testing.T) {
+				t.Run(protocol+"/"+name+"/"+security, func(t *testing.T) {
 					ctx, cancel := newBoxContext(nil)
 					defer cancel()
 					store, err := certificate.NewStore(ctx, logger.NOP(), option.CertificateOptions{})
@@ -45,8 +59,8 @@ func TestBrowserAndroidSystemStoreConfig(t *testing.T) {
 						"type":%q,"tag":"proxy","server":"127.0.0.1","server_port":1,
 						"uuid":"01234567-89ab-cdef-0123-456789abcdef",%s
 						"tls":{"enabled":true,"server_name":"browser.example"%s},
-						"transport":{"type":"xhttp","browser":true,"mode":%q,"path":"/xhttp"}
-					}]}`, protocol, extra, tlsExtra, mode)
+						"transport":{"type":"xhttp","browser":true,"mode":%q,"path":"/xhttp","grpc_framing":%t}
+					}]}`, protocol, extra, tlsExtra, mode, stream.framed)
 					var options option.Options
 					if err := options.UnmarshalJSONContext(ctx, []byte(config)); err != nil {
 						t.Fatal(err)
@@ -67,8 +81,21 @@ func TestBrowserAndroidSystemStoreConfig(t *testing.T) {
 // Exercise the same entry point used by the Android profile editor. The native
 // engine is created and closed, but config checking must not dial the endpoint.
 func TestCheckBrowserRealityConfig(t *testing.T) {
-	for _, mode := range []string{"packet-up", "stream-up"} {
-		t.Run(mode, func(t *testing.T) {
+	for _, stream := range []struct {
+		mode   string
+		framed bool
+	}{
+		{mode: "packet-up"},
+		{mode: "stream-up"},
+		{mode: "stream-one"},
+		{mode: "stream-up", framed: true},
+		{mode: "stream-one", framed: true},
+	} {
+		name := stream.mode
+		if stream.framed {
+			name += "/grpc"
+		}
+		t.Run(name, func(t *testing.T) {
 			config := fmt.Sprintf(`{
 				"outbounds": [{
 					"type": "vless",
@@ -90,11 +117,12 @@ func TestCheckBrowserRealityConfig(t *testing.T) {
 						"type": "xhttp",
 						"browser": true,
 						"mode": %q,
+						"grpc_framing": %t,
 						"host": "front.example",
 						"path": "/xhttp"
 					}
 				}]
-			}`, mode)
+			}`, stream.mode, stream.framed)
 			if err := CheckSingBoxConfig(config, nil); err != nil {
 				t.Fatal(err)
 			}

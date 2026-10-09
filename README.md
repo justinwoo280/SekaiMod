@@ -50,6 +50,19 @@ https://matsuridayo.github.io
 Please visit [here](https://matsuridayo.github.io/nb4a-plugin/) to download plugins for full proxy
 supports.
 
+## Browser XHTTP
+
+VLESS and EWP profiles support Cronet's `packet-up`, `stream-up` and
+`stream-one` modes. Browser `stream-one` requires TLS. Enabling **gRPC Framing**
+selects a streaming mode and emits `grpc_framing: true`; the server must enable
+the same option. Leave it disabled for stock Xray endpoints.
+
+With framing enabled, the path names a gRPC service, such as `/xhttp`, and the
+POST targets `/xhttp/Tun`. Framed `stream-up` still needs an ordinary HTTP
+streaming route for its separate download GET. VLESS/EWP links preserve the
+Browser switch, stream mode and framing option. Existing saved profiles keep
+framing disabled.
+
 ## 支持的订阅格式 / Supported Subscription Format
 
 * 一些广泛使用的格式 (如 Shadowsocks, ClashMeta 和 v2rayN)

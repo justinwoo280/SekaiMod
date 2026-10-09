@@ -3,6 +3,7 @@ package io.nekohasekai.sagernet.fmt.v2ray
 import android.text.TextUtils
 import com.google.gson.Gson
 import io.nekohasekai.sagernet.database.DataStore
+import io.nekohasekai.sagernet.fmt.resolveXHTTPMode
 import io.nekohasekai.sagernet.fmt.http.HttpBean
 import io.nekohasekai.sagernet.fmt.trojan.TrojanBean
 import io.nekohasekai.sagernet.ktx.*
@@ -243,6 +244,9 @@ fun StandardV2RayBean.parseDuckSoft(url: HttpUrl) {
             url.queryParameter("mode")?.let { xhttpMode = it }
             url.queryParameter("browser")?.let {
                 xhttpBrowser = it == "1" || it == "true"
+            }
+            url.queryParameter("grpc_framing")?.let {
+                xhttpGRPCFraming = it == "1" || it == "true"
             }
         }
     }
@@ -496,17 +500,14 @@ fun StandardV2RayBean.toUriVMessVLESSTrojan(isTrojan: Boolean): String {
         "xhttp" -> {
             if (host.isNotBlank()) builder.addQueryParameter("host", host)
             if (path.isNotBlank()) builder.addQueryParameter("path", path)
-            val mode = if (browserXhttp) {
-                xhttpMode.takeIf { it == "packet-up" || it == "stream-up" } ?: "packet-up"
-            } else {
-                xhttpMode
-            }
+            val mode = resolveXHTTPMode(xhttpMode, browserXhttp, xhttpGRPCFraming == true)
             if (mode.isNotBlank() && mode != "auto") {
                 builder.addQueryParameter("mode", mode)
             }
             if (browserXhttp) {
                 builder.addQueryParameter("browser", "1")
             }
+            if (xhttpGRPCFraming == true) builder.addQueryParameter("grpc_framing", "1")
         }
     }
 
@@ -633,11 +634,8 @@ fun buildSingBoxOutboundStreamSettings(bean: StandardV2RayBean): V2RayTransportO
             return V2RayTransportOptions_XHTTPOptions().apply {
                 type = "xhttp"
                 this.browser = browser
-                mode = if (browser) {
-                    bean.xhttpMode.takeIf { it == "packet-up" || it == "stream-up" } ?: "packet-up"
-                } else {
-                    bean.xhttpMode.takeIf { it.isNotBlank() } ?: "auto"
-                }
+                mode = resolveXHTTPMode(bean.xhttpMode, browser, bean.xhttpGRPCFraming == true)
+                if (bean.xhttpGRPCFraming == true) grpc_framing = true
                 if (bean.host.isNotBlank()) host = bean.host
                 if (bean.path.isNotBlank()) path = bean.path
                 if (bean.xhttpPaddingBytes.isNotBlank()) x_padding_bytes = bean.xhttpPaddingBytes
