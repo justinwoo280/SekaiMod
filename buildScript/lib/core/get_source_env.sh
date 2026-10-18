@@ -6,13 +6,12 @@
 #     the default raw format stays compatible with stock Xray.
 #   - EWP UDP adapters preserve IPv4, IPv6 and domain destinations through
 #     both DialContext and ListenPacket.
-#   - EWP/v2.3.1 (sing-ewp v0.3.1): ticket-based 1-RTT resumption on top
-#     of v2.3 — servers mint rotating tickets after every handshake and
-#     clients with an in-memory store resume in 1 RTT (1.5-RTT to data)
-#     instead of the six-stage 3-RTT; rejected/expired tickets silently
-#     fall back to the full handshake, and no store means byte-identical
-#     v2.3.0 behavior. Every resumption still runs a fresh hybrid
-#     X25519+ML-KEM exchange (tickets never feed session keys); no 0-RTT.
+#   - EWP/v2.3.1 (sing-ewp pseudo-version): ticket resumption skips
+#     HelloRetry and currently takes 2 RTT to authenticated application data;
+#     rejected/expired tickets silently fall back to the full v2.3 handshake.
+#     Every resumption still runs a fresh hybrid X25519+ML-KEM exchange
+#     (tickets never feed session keys); no 0-RTT. Capability negotiation
+#     requires a v2.3.1 server and is not an automatic v2.3.0 downgrade.
 #     The sing-box outbound enables it with zero config surface.
 #   - EWP/v2.3 (sing-ewp v0.3.0): six-stage authenticated handshake with
 #     full transcript binding, Ed25519 server signing identity + signed
@@ -41,5 +40,5 @@
 #     platform.Interface) re-applied; oomprofile parses /proc/self/maps
 #     locally instead of linkname'ing runtime/pprof internals (Go 1.26
 #     rejects pull-mode linkname); CI follows the fork's 1.13.x workflows.
-export COMMIT_SING_BOX="54419ede9d38462cfc8ea31d232132a69f1a68d7"
+export COMMIT_SING_BOX="fe041bf0f16ec98d9e9ae863e400f7aa554ebcd3"
 export COMMIT_LIBNEKO="1c47a3af71990a7b2192e03292b4d246c308ef0b"
