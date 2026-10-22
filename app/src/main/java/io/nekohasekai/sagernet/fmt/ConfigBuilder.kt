@@ -260,6 +260,10 @@ fun buildConfig(
     }
 
     return MyOptions().apply {
+        certificate = CertificateOptions().apply {
+            store = DataStore.trustCA
+        }
+
         if (!forTest && DataStore.enableClashAPI) experimental = ExperimentalOptions().apply {
             clash_api = ClashAPIOptions().apply {
                 external_controller = "127.0.0.1:9090"

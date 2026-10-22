@@ -65,6 +65,10 @@ public class SingBoxOptions {
         }
     }
 
+    public static class CertificateOptions extends SingBoxOption {
+        public String store;
+    }
+
     // 自定义序列化器
     public static class SingBoxOptionSerializer implements JsonSerializer<SingBoxOption> {
         @Override
@@ -104,6 +108,8 @@ public class SingBoxOptions {
 
     public static class MyOptions extends SingBoxOption {
         public LogOptions log;
+
+        public CertificateOptions certificate;
 
         public DNSOptions dns;
 

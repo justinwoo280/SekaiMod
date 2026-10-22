@@ -232,6 +232,14 @@
             app:icon="@drawable/ic_action_lock_open"
             app:key="globalAllowInsecure"
             app:title="@string/global_allow_insecure" />
+        <moe.matsuri.nb4a.ui.SimpleMenuPreference
+            app:defaultValue="system"
+            app:entries="@array/trust_ca_entries"
+            app:entryValues="@array/trust_ca_values"
+            app:icon="@drawable/ic_action_lock"
+            app:key="trustCA"
+            app:title="@string/trust_ca"
+            app:useSimpleSummaryProvider="true" />
         <SwitchPreference
             app:key="allowInsecureOnRequest"
             app:title="@string/allow_insecure_on_request_sum" />

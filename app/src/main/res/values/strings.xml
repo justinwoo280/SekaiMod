@@ -588,6 +588,10 @@
     <string name="allow_insecure_on_request_sum">Disable certificate checking when updating
         subscriptions</string>
     <string name="global_allow_insecure">Always allow insecure</string>
+    <string name="trust_ca">Trust CA</string>
+    <string name="trust_ca_system">System</string>
+    <string name="trust_ca_mozilla">Mozilla</string>
+    <string name="trust_ca_chrome">Chrome Root Store</string>
     <string name="mux_preference">Mulitplex</string>
     <string name="padding">Padding</string>
     <string name="network_change_reset_connections">Reset outbound connections when network changes</string>

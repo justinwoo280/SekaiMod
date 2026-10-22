@@ -167,6 +167,7 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     // protocol
 
     var globalAllowInsecure by configurationStore.boolean(Key.GLOBAL_ALLOW_INSECURE) { false }
+    var trustCA by configurationStore.string(Key.TRUST_CA) { "system" }
 
     // old cache, DO NOT ADD
 

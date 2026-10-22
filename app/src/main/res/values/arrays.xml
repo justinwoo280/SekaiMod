@@ -221,6 +221,18 @@
         -->
     </string-array>
 
+    <string-array name="trust_ca_entries">
+        <item>@string/trust_ca_system</item>
+        <item>@string/trust_ca_mozilla</item>
+        <item>@string/trust_ca_chrome</item>
+    </string-array>
+
+    <string-array name="trust_ca_values">
+        <item>system</item>
+        <item>mozilla</item>
+        <item>chrome</item>
+    </string-array>
+
     <string-array name="route_protocol_entry">
         <item>TCP and UDP</item>
         <item>TCP</item>

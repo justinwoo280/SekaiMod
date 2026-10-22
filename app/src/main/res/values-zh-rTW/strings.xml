@@ -39,6 +39,10 @@
     <!-- misc -->
     <string name="service_mode">執行模式</string>
     <string name="service_mode_proxy">代理</string>
+    <string name="trust_ca">信任 CA</string>
+    <string name="trust_ca_system">系統</string>
+    <string name="trust_ca_mozilla">Mozilla</string>
+    <string name="trust_ca_chrome">Chrome 根憑證庫</string>
     <string name="port_proxy">代理連接埠</string>
     <string name="port_http">HTTP 代理連接埠</string>
     <string name="port_local_dns">本地 DNS 連接埠</string>

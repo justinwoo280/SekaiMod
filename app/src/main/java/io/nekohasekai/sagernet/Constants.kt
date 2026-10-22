@@ -55,6 +55,7 @@ object Key {
 
     // Protocol Settings
     const val GLOBAL_ALLOW_INSECURE = "globalAllowInsecure"
+    const val TRUST_CA = "trustCA"
 
     const val ACQUIRE_WAKE_LOCK = "acquireWakeLock"
     const val SHOW_BOTTOM_BAR = "showBottomBar"
