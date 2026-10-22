@@ -26,6 +26,9 @@ if [ "${WITH_CRONET:-0}" = 1 ]; then
   # gomobile builds a generated module outside the source workspace. Local
   # replacements in go.mod are propagated to it; a GOWORK file is not.
   export GOWORK=off
+  # The published Cronet fork is not indexed by sum.golang.org. Keep the
+  # configured module proxy, but skip checksum database lookups for the fork.
+  export GONOSUMDB="${GONOSUMDB:+${GONOSUMDB},}github.com/justinwoo280/*"
   # Download the matching linker on a fresh CI runner; CRONET_LD can override it.
   CRONET_LD=$(bash ../buildScript/init/cronet_ld.sh)
   export CGO_LDFLAGS="${CGO_LDFLAGS:+$CGO_LDFLAGS }-fuse-ld=$CRONET_LD -Wl,-z,max-page-size=16384"
