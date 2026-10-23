@@ -62,6 +62,11 @@ public class EwpBean extends AbstractBean {
      * Must match the server's "route_epoch" when non-zero.
      */
     public Integer routeEpoch;
+    /**
+     * EWP/v2.3.1 opt-in for the early server Finished handshake schedule.
+     * The server must enable the same option; the default remains legacy.
+     */
+    public Boolean earlyServerFinished;
 
     // --------------------------------------- v2ray transport
     // tcp / ws / http / grpc / httpupgrade / quic
@@ -119,6 +124,7 @@ public class EwpBean extends AbstractBean {
         if (serverPublicKey == null) serverPublicKey = "";
         if (serverId == null) serverId = "";
         if (routeEpoch == null) routeEpoch = 0;
+        if (earlyServerFinished == null) earlyServerFinished = false;
         if (type == null || type.isEmpty()) type = "tcp";
         if (host == null) host = "";
         if (path == null) path = "";
@@ -168,7 +174,8 @@ public class EwpBean extends AbstractBean {
         //     serverPublicKey (Ed25519) + serverId + routeEpoch
         // v4: + Browser XHTTP transport switch
         // v5: + optional gRPC framing
-        output.writeInt(5);
+        // v6: + EWP/v2.3.1 early server Finished opt-in
+        output.writeInt(6);
         super.serialize(output);
 
         output.writeString(uuid);
@@ -213,6 +220,7 @@ public class EwpBean extends AbstractBean {
 
         output.writeInt(packetEncoding);
         output.writeBoolean(Boolean.TRUE.equals(xhttpGRPCFraming));
+        output.writeBoolean(Boolean.TRUE.equals(earlyServerFinished));
     }
 
     @Override
@@ -290,6 +298,7 @@ public class EwpBean extends AbstractBean {
 
         packetEncoding = input.readInt();
         xhttpGRPCFraming = version >= 5 && input.readBoolean();
+        earlyServerFinished = version >= 6 && input.readBoolean();
     }
 
     @NotNull

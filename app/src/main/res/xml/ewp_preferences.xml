@@ -36,6 +36,11 @@
             app:key="routeEpoch"
             app:summary="EWP/v2.3: 0 unless the operator rotates route tags"
             app:title="Route Epoch" />
+        <SwitchPreference
+            app:icon="@drawable/ic_baseline_compare_arrows_24"
+            app:key="earlyServerFinished"
+            app:summary="@string/ewp_early_server_finished_summary"
+            app:title="@string/ewp_early_server_finished" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/transport_settings">

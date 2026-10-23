@@ -4769,6 +4769,10 @@ public class SingBoxOptions {
         // tags; must match the server when non-zero.
         public Long route_epoch;
 
+        // EWP/v2.3.1 opt-in for the early server Finished handshake
+        // schedule. The server must enable it too.
+        public Boolean early_server_finished;
+
         public String network;
 
         public OutboundTLSOptions tls;

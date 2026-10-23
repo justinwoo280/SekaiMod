@@ -77,6 +77,22 @@ class BrowserXhttpTest {
         assertFalse(EwpBean().apply { initializeDefaultValues() }.xhttpBrowser)
         assertFalse(VMessBean().apply { initializeDefaultValues() }.xhttpGRPCFraming)
         assertFalse(EwpBean().apply { initializeDefaultValues() }.xhttpGRPCFraming)
+        assertFalse(EwpBean().apply { initializeDefaultValues() }.earlyServerFinished)
+    }
+
+    @Test fun earlyServerFinishedIsSerializedFormattedAndShared() {
+        val bean = ewp().apply {
+            type = "tcp"
+            earlyServerFinished = true
+        }
+
+        val outbound = buildSingBoxOutboundEwpBean(bean)
+        assertTrue(outbound.early_server_finished)
+        assertTrue(gson.toJsonTree(outbound.asMap()).asJsonObject["early_server_finished"].asBoolean)
+
+        val restored = parseEwp(bean.toUri()).apply { initializeDefaultValues() }
+        assertTrue(restored.earlyServerFinished)
+        assertTrue(bean.clone().earlyServerFinished)
     }
 
     @Test fun browserNormalizesModesAndDropsIncompatibleSettings() {
@@ -119,12 +135,13 @@ class BrowserXhttpTest {
         }
     }
 
-    private fun legacyBytes(bean: AbstractBean, version: Int): ByteArray {
+    private fun legacyBytes(bean: AbstractBean, version: Int, trailingBytes: Int = 5): ByteArray {
         val body = ByteBufferOutput(4096, -1).apply { bean.serialize(this) }.toBytes()
-        // Previous schemas have the same body except the final framing flag.
+        // Previous schemas have the same body except the newest trailing
+        // protocol fields.
         return ByteBufferOutput(4096, -1).apply {
             writeInt(version)
-            writeBytes(body, 4, body.size - 5)
+            writeBytes(body, 4, body.size - trailingBytes)
             writeInt(1)
             writeString(bean.name)
             writeString(bean.customOutboundJson)
@@ -149,7 +166,7 @@ class BrowserXhttpTest {
             initializeDefaultValues()
         }
         val restoredEwp = EwpBean().apply {
-            deserializeFromBuffer(ByteBufferInput(legacyBytes(ewp, 4)))
+            deserializeFromBuffer(ByteBufferInput(legacyBytes(ewp, 4, trailingBytes = 6)))
             initializeDefaultValues()
         }
         assertFalse(restoredStandard.xhttpGRPCFraming)

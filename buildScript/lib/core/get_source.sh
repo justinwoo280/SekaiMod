@@ -12,7 +12,7 @@ if [ ! -d "sing-box" ]; then
   git clone --no-checkout https://github.com/justinwoo280/sing-box.git
 fi
 pushd sing-box
-git fetch --tags
+git fetch origin "$COMMIT_SING_BOX"
 git checkout "$COMMIT_SING_BOX"
 popd
 

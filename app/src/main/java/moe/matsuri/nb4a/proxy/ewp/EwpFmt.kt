@@ -40,6 +40,7 @@ fun buildSingBoxOutboundEwpBean(bean: EwpBean): Outbound_EwpOptions {
         server_public_key = bean.serverPublicKey
         server_id = bean.serverId
         bean.routeEpoch?.let { if (it > 0) route_epoch = it.toLong() }
+        early_server_finished = bean.earlyServerFinished == true
         tls = buildEwpTLS(bean)
         transport = buildEwpTransport(bean)
     }
@@ -178,6 +179,7 @@ private fun buildEwpTransport(bean: EwpBean): V2RayTransportOptions? {
 //   ewp://<uuid>@host:port?pk=<ed25519-pub>&sid=<server-id>&type=ws
 //        &host=...&path=...&sni=...&alpn=...
 //        &fp=chrome&insecure=0&ech=1&echQs=public.example
+//        &early_server_finished=1
 //        #remarks
 //
 // Mirrors the ad-hoc style used by AnyTLS / VLESS share links.
@@ -197,6 +199,7 @@ fun EwpBean.toUri(): String {
     if (serverPublicKey.isNotBlank()) builder.addQueryParameter("pk", serverPublicKey)
     if (serverId.isNotBlank()) builder.addQueryParameter("sid", serverId)
     routeEpoch?.let { if (it > 0) builder.addQueryParameter("re", it.toString()) }
+    if (earlyServerFinished == true) builder.addQueryParameter("early_server_finished", "1")
 
     if (type.isNotBlank() && type != "tcp") builder.addQueryParameter("type", type)
     if (host.isNotBlank()) builder.addQueryParameter("host", host)
@@ -253,6 +256,9 @@ fun parseEwp(url: String): EwpBean {
         serverPublicKey = link.queryParameter("pk") ?: ""
         serverId = link.queryParameter("sid") ?: ""
         routeEpoch = link.queryParameter("re")?.toIntOrNull() ?: 0
+        link.queryParameter("early_server_finished")?.also {
+            earlyServerFinished = it == "1" || it == "true"
+        }
 
         type = link.queryParameter("type") ?: "tcp"
         host = link.queryParameter("host") ?: ""

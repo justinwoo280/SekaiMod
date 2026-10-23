@@ -564,6 +564,8 @@
     <string name="enable_ech_sum">Enable Encrypted Client Hello</string>
     <string name="ech_settings">ECH Settings</string>
     <string name="ech_config">ECH Config</string>
+    <string name="ewp_early_server_finished">Early Server Finished</string>
+    <string name="ewp_early_server_finished_summary">EWP/v2.3.1 opt-in; the server must enable it too</string>
     <string name="http_upgrade_host">HTTPUpgrade Host</string>
     <string name="http_upgrade_path">HTTPUpgrade Path</string>
     <string name="xhttp_settings">XHTTP Settings</string>

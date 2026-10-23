@@ -41,7 +41,7 @@ require (
 	github.com/huin/goupnp v1.3.0 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/jsimonetti/rtnetlink v1.4.1 // indirect
-	github.com/justinwoo280/sing-ewp v0.3.2-0.20261018133531-a39a9863c246 // indirect
+	github.com/justinwoo280/sing-ewp v0.3.2-0.20261023015301-0b89075e7185 // indirect
 	github.com/justinwoo280/sing-xhttp v0.1.7-0.20261008120903-6f71916eb93e // indirect
 	github.com/klauspost/compress v1.19.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect

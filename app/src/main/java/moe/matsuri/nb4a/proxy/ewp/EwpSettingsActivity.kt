@@ -25,6 +25,7 @@ class EwpSettingsActivity : ProfileSettingsActivity<EwpBean>() {
     private val serverPublicKey = pbm.add(PreferenceBinding(Type.Text, "serverPublicKey"))
     private val serverId = pbm.add(PreferenceBinding(Type.Text, "serverId"))
     private val routeEpoch = pbm.add(PreferenceBinding(Type.TextToInt, "routeEpoch"))
+    private val earlyServerFinished = pbm.add(PreferenceBinding(Type.Bool, "earlyServerFinished"))
 
     private val type = pbm.add(PreferenceBinding(Type.Text, "type"))
     private val host = pbm.add(PreferenceBinding(Type.Text, "host"))
