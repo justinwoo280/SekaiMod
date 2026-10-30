@@ -157,9 +157,12 @@ object Key {
 }
 
 object TunImplementation {
+    // These values are persisted in configuration.db; keep existing IDs stable.
     const val GVISOR = 0
     const val SYSTEM = 1
     const val MIXED = 2
+    const val GO = 3
+    const val LWIP = 4
 }
 
 object IPv6Mode {

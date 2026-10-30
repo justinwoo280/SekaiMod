@@ -63,6 +63,19 @@ streaming route for its separate download GET. VLESS/EWP links preserve the
 Browser switch, stream mode and framing option. Existing saved profiles keep
 framing disabled.
 
+## TUN stacks
+
+The `1.14.x` build offers **Go**, **gVisor**, **System**, **Mixed** and **lwIP** in
+the TUN implementation setting. New installations default to Go; saved selections
+retain their previous meanings. The configuration generator emits the matching
+`go`, `gvisor`, `system`, `mixed` or `lwip` stack name.
+
+LibCore links lwIP statically through CGO on all four Android ABIs (API 23+),
+alongside the existing Cronet support. The APK includes native notices under
+`assets/licenses/sing-lwip/`. Core revisions are pinned in
+`buildScript/lib/core/get_source_env.sh`, with the matching sing-tun and native
+library modules recorded in `libcore/go.mod` and `go.sum`.
+
 ## 支持的订阅格式 / Supported Subscription Format
 
 * 一些广泛使用的格式 (如 Shadowsocks, ClashMeta 和 v2rayN)

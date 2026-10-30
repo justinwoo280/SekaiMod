@@ -1,4 +1,7 @@
 # sing-box mod 1.14.x line, which carries:
+#   - Go userspace TUN stack as the default, with optional static-CGO lwIP;
+#     system, gVisor and mixed remain selectable. Native dependencies are
+#     pinned together with the sing-tun integration in libcore/go.mod.
 #   - Browser download termination stops its upload; network changes reset the
 #     native pool while allowing later dials. Cronet pins include the matching
 #     native HTTP/2 pool fixes and smaller initial packet-up buffers.
@@ -40,5 +43,5 @@
 #     platform.Interface) re-applied; oomprofile parses /proc/self/maps
 #     locally instead of linkname'ing runtime/pprof internals (Go 1.26
 #     rejects pull-mode linkname); CI follows the fork's 1.13.x workflows.
-export COMMIT_SING_BOX="437d58e02ff2c41795b91415fbf0bfc49936ffaa"
+export COMMIT_SING_BOX="4254e97805dfdbf19459f4ffa67936a1dc4444ef"
 export COMMIT_LIBNEKO="1c47a3af71990a7b2192e03292b4d246c308ef0b"

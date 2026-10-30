@@ -485,9 +485,19 @@
     </string-array>
 
     <string-array name="tun_implementation">
+        <item>Go</item>
         <item>gVisor</item>
         <item>System</item>
         <item>Mixed</item>
+        <item>lwIP</item>
+    </string-array>
+
+    <string-array name="tun_implementation_values">
+        <item>3</item>
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>4</item>
     </string-array>
 
     <string-array name="hysteria_protocol">

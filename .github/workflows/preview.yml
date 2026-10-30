@@ -28,6 +28,12 @@ jobs:
       - name: Native Build
         if: steps.cache.outputs.cache-hit != 'true'
         run: ./run lib core
+      - name: Test core and bundled lwIP
+        if: steps.cache.outputs.cache-hit != 'true'
+        working-directory: libcore
+        run: |
+          CGO_ENABLED=1 go test -count=1 -timeout=3m -tags "$(cat build_tags)" ./...
+          CGO_ENABLED=1 go test -count=1 -timeout=3m -tags "$(cat build_tags)" -run '^TestLWIP' github.com/sagernet/sing-tun
       - name: Upload LibCore
         uses: actions/upload-artifact@v5
         with:

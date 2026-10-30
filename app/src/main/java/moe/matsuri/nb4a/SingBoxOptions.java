@@ -2397,10 +2397,19 @@ public class SingBoxOptions {
         // Generate note: Listable
         public List<String> exclude_package;
 
-        public Boolean endpoint_independent_nat;
+        public String udp_mapping;
+
+        public String udp_filtering;
+
+        public Long udp_nat_max;
+
+        public String dns_mode;
+
+        public List<String> dns_address;
 
         public Long udp_timeout;
 
+        // go (default), gvisor, system, mixed, lwip.
         public String stack;
 
         public TunPlatformOptions platform;
@@ -2895,11 +2904,13 @@ public class SingBoxOptions {
 
         public String udp_mapping;
         public String udp_filtering;
+        public Long udp_nat_max;
         public String dns_mode;
         public List<String> dns_address;
 
         public Long udp_timeout;
 
+        // go (default), gvisor, system, mixed, lwip.
         public String stack;
 
         public TunPlatformOptions platform;

@@ -50,6 +50,30 @@ const val TAG_BLOCK = "block"
 
 const val LOCALHOST = "127.0.0.1"
 
+internal fun buildTunInbound(implementation: Int, mtu: Int, ipv6Mode: Int) =
+    Inbound_TunOptions().apply {
+        type = "tun"
+        tag = "tun-in"
+        stack = when (implementation) {
+            TunImplementation.GVISOR -> "gvisor"
+            TunImplementation.SYSTEM -> "system"
+            TunImplementation.MIXED -> "mixed"
+            TunImplementation.LWIP -> "lwip"
+            else -> "go"
+        }
+        this.mtu = mtu
+        // The unified address field accepts both IP families. Sniffing and
+        // domain resolution are configured through route actions below.
+        address = when (ipv6Mode) {
+            IPv6Mode.DISABLE -> listOf(VpnService.PRIVATE_VLAN4_CLIENT + "/28")
+            IPv6Mode.ONLY -> listOf(VpnService.PRIVATE_VLAN6_CLIENT + "/126")
+            else -> listOf(
+                VpnService.PRIVATE_VLAN4_CLIENT + "/28",
+                VpnService.PRIVATE_VLAN6_CLIENT + "/126",
+            )
+        }
+    }
+
 class ConfigBuildResult(
     var config: String,
     var externalIndex: List<IndexEntity>,
@@ -303,30 +327,7 @@ fun buildConfig(
         inbounds = mutableListOf()
 
         if (!forTest) {
-            if (isVPN) inbounds.add(Inbound_TunOptions().apply {
-                type = "tun"
-                tag = "tun-in"
-                stack = when (DataStore.tunImplementation) {
-                    TunImplementation.GVISOR -> "gvisor"
-                    TunImplementation.SYSTEM -> "system"
-                    else -> "mixed"
-                }
-                mtu = DataStore.mtu
-                // sing-box 1.13 removed inbound-level sniff /
-                // sniff_override_destination / domain_strategy. Those are
-                // now expressed as route rule actions; we add them once
-                // below after the inbounds block is built.
-                // sing-box 1.13 unified TUN address field — a single
-                // 'address' list takes both v4 and v6 CIDRs.
-                address = when (ipv6Mode) {
-                    IPv6Mode.DISABLE -> listOf(VpnService.PRIVATE_VLAN4_CLIENT + "/28")
-                    IPv6Mode.ONLY -> listOf(VpnService.PRIVATE_VLAN6_CLIENT + "/126")
-                    else -> listOf(
-                        VpnService.PRIVATE_VLAN4_CLIENT + "/28",
-                        VpnService.PRIVATE_VLAN6_CLIENT + "/126",
-                    )
-                }
-            })
+            if (isVPN) inbounds.add(buildTunInbound(DataStore.tunImplementation, DataStore.mtu, ipv6Mode))
             inbounds.add(Inbound_MixedOptions().apply {
                 type = "mixed"
                 tag = TAG_MIXED

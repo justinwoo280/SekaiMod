@@ -3,7 +3,9 @@ package libcore
 import (
 	"context"
 	"errors"
+	"net"
 	"net/netip"
+	"strconv"
 
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/experimental/libbox/platform"
@@ -77,11 +79,11 @@ func (a *boxPlatformInterfaceAdapter) UsePlatformConnectionOwnerFinder() bool {
 }
 
 func (a *boxPlatformInterfaceAdapter) FindConnectionOwner(req *adapter.FindConnectionOwnerRequest) (*adapter.ConnectionOwner, error) {
-	src, err := netip.ParseAddrPort(req.SourceAddress + ":" + addrPortNumber(req.SourcePort))
+	src, err := netip.ParseAddrPort(net.JoinHostPort(req.SourceAddress, strconv.Itoa(int(req.SourcePort))))
 	if err != nil {
 		return nil, err
 	}
-	dst, err := netip.ParseAddrPort(req.DestinationAddress + ":" + addrPortNumber(req.DestinationPort))
+	dst, err := netip.ParseAddrPort(net.JoinHostPort(req.DestinationAddress, strconv.Itoa(int(req.DestinationPort))))
 	if err != nil {
 		return nil, err
 	}
@@ -179,21 +181,4 @@ func (a *boxPlatformInterfaceAdapter) MyInterfaceAddress() []netip.Addr {
 	// when auto-routing; the Android VPN service handles this
 	// transparently for us, so an empty list is correct.
 	return nil
-}
-
-// addrPortNumber turns an int32 port into a string suitable for
-// netip.ParseAddrPort (we deliberately avoid strconv to keep the
-// per-connection allocation tiny).
-func addrPortNumber(p int32) string {
-	if p == 0 {
-		return "0"
-	}
-	var buf [6]byte
-	n := len(buf)
-	for p > 0 {
-		n--
-		buf[n] = byte('0' + p%10)
-		p /= 10
-	}
-	return string(buf[n:])
 }

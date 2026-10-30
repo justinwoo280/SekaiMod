@@ -1,6 +1,7 @@
 package libcore
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -153,6 +154,23 @@ const testSingBox14Config = `{
 func TestCheckSingBoxConfig14(t *testing.T) {
 	if err := CheckSingBoxConfig(testSingBox14Config, nil); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestCheckTunStackConfigurations(t *testing.T) {
+	for _, stack := range []string{"", "go", "gvisor", "system", "mixed", "lwip"} {
+		t.Run("stack="+stack, func(t *testing.T) {
+			config := fmt.Sprintf(`{
+				"inbounds": [{"type":"tun", "tag":"tun-in", "stack":%q,
+					"address":["172.19.0.1/28", "fdfe:dcba:9876::1/126"],
+					"mtu":9000, "dns_mode":"disabled", "udp_mapping":"endpoint_independent",
+					"udp_filtering":"endpoint_independent", "udp_nat_max":4096}],
+				"outbounds": [{"type":"direct", "tag":"direct"}]
+			}`, stack)
+			if err := CheckSingBoxConfig(config, nil); err != nil {
+				t.Fatal(err)
+			}
+		})
 	}
 }
 
