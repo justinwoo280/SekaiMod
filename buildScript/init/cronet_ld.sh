@@ -15,14 +15,14 @@ fi
 
 # Match the Chromium toolchain used by the pinned Cronet native archives.
 # NDK 26's linker cannot handle their relative C++ vtable relocations.
-revision=llvmorg-23-init-10931-g20b6ec66-11
+revision=llvmorg-24-init-3796-g20e97c4b-27
 case "$(uname -s)/$(uname -m)" in
   Linux/x86_64)
     platform=Linux_x64
-    checksum=de584381536aa5ba2403033c4f8b70f3c39c2e5d7fa87c953b7fd8bfbba0ee2a
+    checksum=968195fa0b49958e066695df2c7c985d169a20fa06eedb8fcef900a6030edcb0
     ;;
   *)
-    echo "Error: set CRONET_LD to a Chromium LLVM 23 ld.lld on this host." >&2
+    echo "Error: set CRONET_LD to a Chromium LLVM 24 ld.lld on this host." >&2
     exit 1
     ;;
 esac
