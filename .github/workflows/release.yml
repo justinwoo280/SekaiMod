@@ -61,6 +61,11 @@ jobs:
         with:
           name: libcore
           path: app/libs
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
       - name: Gradle cache
         uses: actions/cache@v5
         with:
@@ -101,7 +106,7 @@ jobs:
           echo "ndk.dir=${ANDROID_HOME}/ndk/25.0.8775105" >> local.properties
           export LOCAL_PROPERTIES="${{ secrets.LOCAL_PROPERTIES }}"
           ./run init action gradle
-          ./gradlew app:testOssReleaseUnitTest app:assembleOssRelease
+          ./gradlew --stacktrace app:testOssReleaseUnitTest app:assembleOssRelease
           APK=$(find app/build/outputs/apk -name '*arm64-v8a*.apk')
           APK=$(dirname $APK)
           echo "APK=$APK" >> $GITHUB_ENV
@@ -144,6 +149,11 @@ jobs:
         with:
           name: libcore
           path: app/libs
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
       - name: Gradle cache
         uses: actions/cache@v5
         with:
@@ -158,7 +168,7 @@ jobs:
           echo "ndk.dir=${ANDROID_HOME}/ndk/25.0.8775105" >> local.properties
           export LOCAL_PROPERTIES="${{ secrets.LOCAL_PROPERTIES }}"
           ./run init action gradle
-          ./gradlew bundlePlayRelease
+          ./gradlew --stacktrace bundlePlayRelease
       - uses: actions/upload-artifact@v5
         with:
           name: AAB
