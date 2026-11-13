@@ -123,7 +123,6 @@ internal fun sanitizeBrowserXHTTPOutboundJson(json: String): String {
             "client_key_path",
             "kernel_tx",
             "kernel_rx",
-            "alpn",
         ).forEach(::remove)
     }
     return gson.toJson(map)

@@ -4,6 +4,8 @@
 #     pinned together with the sing-tun integration in libcore/go.mod.
 #   - Cronet Chromium 154.0.8037.49, Chrome Root Store v45 and root-derived
 #     Trust Anchor IDs; sing-lwip includes the pinned fragment reassembly fixes.
+#   - Browser XHTTP selects HTTP/3 with tls.alpn=["h3"] and routes UDP through
+#     the outbound; explicit h2/http/1.1 offers are preserved for TCP/TLS.
 #   - Browser download termination stops its upload; network changes reset the
 #     native pool while allowing later dials. Cronet pins include the matching
 #     native HTTP/2 pool fixes and smaller initial packet-up buffers.
@@ -45,5 +47,5 @@
 #     platform.Interface) re-applied; oomprofile parses /proc/self/maps
 #     locally instead of linkname'ing runtime/pprof internals (Go 1.26
 #     rejects pull-mode linkname); CI follows the fork's 1.13.x workflows.
-export COMMIT_SING_BOX="2ed5b48733b6d3ff62d7a95f68d1f0e7da6a910b"
+export COMMIT_SING_BOX="f9d004a46604ae8f3b2355116f065b4feeec9dde"
 export COMMIT_LIBNEKO="1c47a3af71990a7b2192e03292b4d246c308ef0b"

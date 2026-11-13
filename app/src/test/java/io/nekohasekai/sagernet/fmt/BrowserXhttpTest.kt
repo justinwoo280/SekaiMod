@@ -50,10 +50,10 @@ class BrowserXhttpTest {
         routeEpoch = 7
     }
 
-    private fun assertBrowserTls(tls: OutboundTLSOptions) {
+    private fun assertBrowserTls(tls: OutboundTLSOptions, alpn: List<String> = listOf("h3")) {
         assertEquals(false, tls.insecure)
         assertNull(tls.utls)
-        assertNull(tls.alpn)
+        assertEquals(alpn, tls.alpn)
         assertNull(tls.fragment)
         assertNull(tls.record_fragment)
         assertEquals("inner.example.com", tls.server_name)
@@ -78,6 +78,29 @@ class BrowserXhttpTest {
         assertFalse(VMessBean().apply { initializeDefaultValues() }.xhttpGRPCFraming)
         assertFalse(EwpBean().apply { initializeDefaultValues() }.xhttpGRPCFraming)
         assertFalse(EwpBean().apply { initializeDefaultValues() }.earlyServerFinished)
+    }
+
+    @Test fun browserAlpnSurvivesConfigAndShareLinks() {
+        for (value in listOf("", "h2", "http/1.1", "h3", "h2,http/1.1")) {
+            val standard = vless().apply { alpn = value }
+            val ewp = ewp().apply { alpn = value }
+            val expected = value.takeIf { it.isNotBlank() }?.split(",")
+            val standardOutbound = buildSingBoxOutboundStandardV2RayBean(standard) as Outbound_VLESSOptions
+            assertEquals(expected, standardOutbound.tls.alpn)
+            assertEquals(expected, buildSingBoxOutboundEwpBean(ewp).tls.alpn)
+
+            val link = standard.toUriVMessVLESSTrojan(false).replace("vless://", "https://").toHttpUrl()
+            val imported = VMessBean().apply {
+                alterId = -1
+                parseDuckSoft(link)
+                initializeDefaultValues()
+            }
+            assertEquals(value, imported.alpn)
+            assertTrue(imported.xhttpBrowser)
+            val importedEwp = parseEwp(ewp.toUri()).apply { initializeDefaultValues() }
+            assertEquals(value, importedEwp.alpn)
+            assertTrue(importedEwp.xhttpBrowser)
+        }
     }
 
     @Test fun earlyServerFinishedIsSerializedFormattedAndShared() {
@@ -203,19 +226,21 @@ class BrowserXhttpTest {
 
     @Test fun browserRealityExcludesEchAndCustomCertificates() {
         val standard = buildSingBoxOutboundStandardV2RayBean(vless().apply {
+            alpn = "h2"
             realityPubKey = "test-reality-key"
             realityShortId = "abcd"
             enableECH = true
             certificates = "custom CA"
         }) as Outbound_VLESSOptions
         val ewp = buildSingBoxOutboundEwpBean(ewp().apply {
+            alpn = "h2"
             realityPubKey = "test-reality-key"
             realityShortId = "abcd"
             enableECH = true
             certificates = "custom CA"
         })
         for (tls in listOf(standard.tls, ewp.tls)) {
-            assertBrowserTls(tls)
+            assertBrowserTls(tls, listOf("h2"))
             assertEquals("test-reality-key", tls.reality.public_key)
             assertEquals("abcd", tls.reality.short_id)
             assertNull(tls.ech)
@@ -252,10 +277,12 @@ class BrowserXhttpTest {
         }
         assertTrue(imported.xhttpBrowser)
         assertEquals("stream-up", imported.xhttpMode)
+        assertEquals("h3", imported.alpn)
         assertNull(link.queryParameter("fp"))
         assertNull(link.queryParameter("allowInsecure"))
 
         val ewp = ewp().apply {
+            alpn = "h2"
             realityPubKey = "test-reality-key"
             realityShortId = "abcd"
         }
@@ -266,6 +293,7 @@ class BrowserXhttpTest {
         assertEquals(ewp.realityShortId, importedEwp.realityShortId)
         assertEquals(ewp.serverPublicKey, importedEwp.serverPublicKey)
         assertEquals(ewp.routeEpoch, importedEwp.routeEpoch)
+        assertEquals("h2", importedEwp.alpn)
     }
 
     @Test fun customOverridesCannotUndoBrowserSettings() {
@@ -274,7 +302,7 @@ class BrowserXhttpTest {
             {"detour":"direct", "transport":{"browser":false,"mode":"stream-one",
               "xmux":{"max_concurrency":"8-16"},"path":"/custom"},
              "tls":{"insecure":true,"utls":{"enabled":true,"fingerprint":"firefox"},
-              "alpn":["h3"],"server_name":"custom.example.com"}}
+              "alpn":["h2"],"server_name":"custom.example.com"}}
         """.trimIndent())
         val json = gson.toJsonTree(outbound.asMap()).asJsonObject
         val transport = json.getAsJsonObject("transport")
@@ -285,7 +313,7 @@ class BrowserXhttpTest {
         val tls = json.getAsJsonObject("tls")
         assertFalse(tls["insecure"].asBoolean)
         assertFalse(tls.has("utls"))
-        assertFalse(tls.has("alpn"))
+        assertEquals(listOf("h2"), tls.getAsJsonArray("alpn").map { it.asString })
         assertEquals("custom.example.com", tls["server_name"].asString)
         assertEquals("direct", json["detour"].asString)
     }

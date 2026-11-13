@@ -518,7 +518,7 @@ fun StandardV2RayBean.toUriVMessVLESSTrojan(isTrojan: Boolean): String {
                 if (sni.isNotBlank()) {
                     builder.addQueryParameter("sni", sni)
                 }
-                if (alpn.isNotBlank() && !browserXhttp) {
+                if (alpn.isNotBlank()) {
                     builder.addQueryParameter("alpn", alpn.replace("\n", ","))
                 }
                 if (certificates.isNotBlank() && !(browserXhttp && realityPubKey.isNotBlank())) {
@@ -674,8 +674,7 @@ fun buildSingBoxOutboundTLS(bean: StandardV2RayBean): OutboundTLSOptions? {
         insecure = !browser && (bean.allowInsecure || DataStore.globalAllowInsecure)
         if (bean.sni.isNotBlank()) server_name = bean.sni
         if (bean.alpn.isNotBlank()) {
-            val requestedAlpn = bean.alpn.listByLineOrComma()
-            if (!browser || requestedAlpn == listOf("h2", "http/1.1")) alpn = requestedAlpn
+            alpn = bean.alpn.listByLineOrComma()
         }
         if (bean.certificates.isNotBlank() && !browserReality) certificate = bean.certificates
         // REALITY and uTLS are TCP/TLS-only: QUIC-class transports (v2ray

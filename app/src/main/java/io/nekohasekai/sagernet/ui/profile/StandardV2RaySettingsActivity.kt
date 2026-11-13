@@ -333,7 +333,6 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
 
         xhttpXmuxCategory.isEnabled = !browser
         allowInsecure.preference.isEnabled = !browser
-        alpn.preference.isEnabled = !browser
         utlsFingerprint.preference.isEnabled = !browser
     }
 

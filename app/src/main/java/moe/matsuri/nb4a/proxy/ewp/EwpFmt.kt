@@ -54,8 +54,7 @@ private fun buildEwpTLS(bean: EwpBean): OutboundTLSOptions {
         insecure = !browser && (bean.allowInsecure || DataStore.globalAllowInsecure)
         if (bean.sni.isNotBlank()) server_name = bean.sni
         if (bean.alpn.isNotBlank()) {
-            val requestedAlpn = bean.alpn.listByLineOrComma()
-            if (!browser || requestedAlpn == listOf("h2", "http/1.1")) alpn = requestedAlpn
+            alpn = bean.alpn.listByLineOrComma()
         }
         if (bean.certificates.isNotBlank() && !browserReality) certificate = bean.certificates
 
@@ -216,7 +215,7 @@ fun EwpBean.toUri(): String {
     }
 
     if (sni.isNotBlank()) builder.addQueryParameter("sni", sni)
-    if (alpn.isNotBlank() && !browserXhttp) builder.addQueryParameter("alpn", alpn)
+    if (alpn.isNotBlank()) builder.addQueryParameter("alpn", alpn)
     if (utlsFingerprint.isNotBlank() && !browserXhttp) builder.addQueryParameter("fp", utlsFingerprint)
     if (allowInsecure && !browserXhttp) builder.addQueryParameter("insecure", "1")
 

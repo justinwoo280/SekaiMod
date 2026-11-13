@@ -124,7 +124,6 @@ class EwpSettingsActivity : ProfileSettingsActivity<EwpBean>() {
 
             xhttpXmuxCategory?.isEnabled = !browser
             allowInsecure.preference.isEnabled = !browser
-            alpn.preference.isEnabled = !browser
             utlsFingerprint.preference.isEnabled = !browser
             tlsFragment.preference.isEnabled = !browser
             tlsRecordFragment.preference.isEnabled = !browser
