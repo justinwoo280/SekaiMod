@@ -38,6 +38,8 @@ public class TuicBean extends AbstractBean {
     public String customJSON;
     public Integer protocolVersion;
     public String uuid;
+    public Boolean udpOverStream;
+    public String heartbeat;
 
     @Override
     public void initializeDefaultValues() {
@@ -59,11 +61,13 @@ public class TuicBean extends AbstractBean {
         if (enableECH == null) enableECH = false;
         if (echConfig == null) echConfig = "";
         if (echQueryServerName == null) echQueryServerName = "";
+        if (udpOverStream == null) udpOverStream = false;
+        if (heartbeat == null) heartbeat = "";
     }
 
     @Override
     public void serialize(ByteBufferOutput output) {
-        output.writeInt(3);
+        output.writeInt(4);
         super.serialize(output);
         output.writeString(token);
         output.writeString(caText);
@@ -82,6 +86,8 @@ public class TuicBean extends AbstractBean {
         output.writeBoolean(enableECH);
         output.writeString(echConfig);
         output.writeString(echQueryServerName);
+        output.writeBoolean(udpOverStream);
+        output.writeString(heartbeat);
     }
 
     @Override
@@ -112,6 +118,10 @@ public class TuicBean extends AbstractBean {
             enableECH = input.readBoolean();
             echConfig = input.readString();
             echQueryServerName = input.readString();
+        }
+        if (version >= 4) {
+            udpOverStream = input.readBoolean();
+            heartbeat = input.readString();
         }
     }
 

@@ -34,6 +34,7 @@ Upstream usage documentation: https://matsuridayo.github.io
 * Trojan
 * VLESS
 * AnyTLS
+* Snell (v4 / v6)
 * ShadowTLS
 * TUIC
 * Hysteria 1/2
@@ -48,6 +49,9 @@ Please visit [here](https://matsuridayo.github.io/nb4a-plugin/) to download plug
 supports.
 
 ## Browser XHTTP
+
+See [the 1.14.x protocol/editor compatibility notes](PROTOCOLS_1.14.md) for
+Snell and the updated AnyTLS, TUIC, Hysteria2 and SSH options.
 
 VLESS and EWP profiles support Cronet's `packet-up`, `stream-up` and
 `stream-one` modes. Browser `stream-one` requires TLS. Enabling **gRPC Framing**

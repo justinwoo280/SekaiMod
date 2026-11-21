@@ -24,6 +24,8 @@ import moe.matsuri.nb4a.Protocols
 import moe.matsuri.nb4a.proxy.anytls.AnyTLSBean
 import moe.matsuri.nb4a.proxy.config.ConfigBean
 import moe.matsuri.nb4a.proxy.ewp.EwpBean
+import moe.matsuri.nb4a.proxy.snell.parseClashSnell
+import moe.matsuri.nb4a.proxy.snell.parseSnellOutbound
 import moe.matsuri.nb4a.utils.Util
 import org.ini4j.Ini
 import org.json.JSONArray
@@ -37,6 +39,11 @@ import androidx.core.net.toUri
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 object RawUpdater : GroupUpdater() {
+
+    private fun durationValue(value: Any?, numericUnit: String): String {
+        val text = value?.toString()?.trim().orEmpty()
+        return if (text.toDoubleOrNull() != null) text + numericUnit else text
+    }
 
     @SuppressLint("Recycle")
     override suspend fun doUpdate(
@@ -252,6 +259,8 @@ object RawUpdater : GroupUpdater() {
                     // Note: YAML numbers parsed as "Long"
 
                     when (proxy["type"] as String) {
+                        "snell" -> proxies.add(parseClashSnell(proxy))
+
                         "socks5" -> {
                             proxies.add(SOCKSBean().apply {
                                 serverAddress = proxy["server"] as String
@@ -506,6 +515,10 @@ object RawUpdater : GroupUpdater() {
                                     "server" -> bean.serverAddress = opt.value as String
                                     "port" -> bean.serverPort = opt.value.toString().toInt()
                                     "password" -> bean.password = opt.value.toString()
+                                    "idle-session-check-interval" -> bean.idleSessionCheckInterval = durationValue(opt.value, "s")
+                                    "idle-session-timeout" -> bean.idleSessionTimeout = durationValue(opt.value, "s")
+                                    "min-idle-session" -> bean.minIdleSession = opt.value.toString().toInt()
+                                    "client-metadata" -> bean.clientMetadata = opt.value.toString()
                                     "client-fingerprint" -> bean.utlsFingerprint =
                                         opt.value as String
 
@@ -588,6 +601,14 @@ object RawUpdater : GroupUpdater() {
                                     "ports" -> hopPorts = opt.value.toString()
 
                                     "obfs-password" -> bean.obfuscation = opt.value.toString()
+                                    "obfs" -> bean.obfsType = opt.value.toString()
+                                    "obfs-min-packet-size" -> bean.geckoMinPacketSize = opt.value.toString().toInt()
+                                    "obfs-max-packet-size" -> bean.geckoMaxPacketSize = opt.value.toString().toInt()
+                                    "hop-interval" -> bean.hopInterval = opt.value.toString().removeSuffix("s").toInt()
+                                    "hop-interval-max" -> bean.hopIntervalMax = opt.value.toString().removeSuffix("s").toInt()
+                                    "bbr-profile" -> bean.bbrProfile = opt.value.toString()
+                                    "disable-chrome-parrot" -> bean.disableChromeParrot = opt.value.toString().toBoolean()
+                                    "brutal-debug" -> bean.brutalDebug = opt.value.toString().toBoolean()
 
                                     "password" -> bean.authPayload = opt.value.toString()
 
@@ -649,6 +670,9 @@ object RawUpdater : GroupUpdater() {
                                         opt.value.toString()
 
                                     "udp-relay-mode" -> bean.udpRelayMode = opt.value.toString()
+                                    "udp-over-stream" -> bean.udpOverStream = opt.value.toString().toBoolean()
+                                    "heartbeat" -> bean.heartbeat = opt.value.toString()
+                                    "heartbeat-interval" -> bean.heartbeat = durationValue(opt.value, "ms")
 
                                 }
                             }
@@ -759,6 +783,20 @@ object RawUpdater : GroupUpdater() {
 
         if (json is JSONObject) {
             when {
+                json.optString("type") == "snell" -> return listOf(parseSnellOutbound(json.toString()))
+
+                // A typed sing-box outbound must retain its native fields.
+                // In particular, up_mbps does not make Hysteria2 a legacy
+                // Hysteria1 JSON profile, and server_ports need not have a
+                // separate server_port alongside them.
+                json.optString("type").isNotBlank() && json.has("server") -> {
+                    return listOf(ConfigBean().applyDefaultValues().apply {
+                        type = 1
+                        config = json.toStringPretty()
+                        name = json.optString("tag")
+                    })
+                }
+
                 json.has("server") && (json.has("up") || json.has("up_mbps")) -> {
                     return listOf(json.parseHysteria1Json())
                 }
@@ -784,7 +822,7 @@ object RawUpdater : GroupUpdater() {
                                 it
                             }
                         }.map {
-                            ConfigBean().apply {
+                            if (it.optString("type") == "snell") parseSnellOutbound(it.toString()) else ConfigBean().apply {
                                 applyDefaultValues()
                                 type = 1
                                 config = it.toStringPretty()

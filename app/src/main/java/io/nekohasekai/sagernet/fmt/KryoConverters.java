@@ -18,6 +18,7 @@ import io.nekohasekai.sagernet.fmt.naive.NaiveBean;
 import io.nekohasekai.sagernet.fmt.shadowsocks.ShadowsocksBean;
 import moe.matsuri.nb4a.proxy.anytls.AnyTLSBean;
 import moe.matsuri.nb4a.proxy.ewp.EwpBean;
+import moe.matsuri.nb4a.proxy.snell.SnellBean;
 import moe.matsuri.nb4a.proxy.shadowtls.ShadowTLSBean;
 import io.nekohasekai.sagernet.fmt.socks.SOCKSBean;
 import io.nekohasekai.sagernet.fmt.ssh.SSHBean;
@@ -154,6 +155,12 @@ public class KryoConverters {
     public static EwpBean ewpDeserialize(byte[] bytes) {
         if (JavaUtil.isEmpty(bytes)) return null;
         return deserialize(new EwpBean(), bytes);
+    }
+
+    @TypeConverter
+    public static SnellBean snellDeserialize(byte[] bytes) {
+        if (JavaUtil.isEmpty(bytes)) return null;
+        return deserialize(new SnellBean(), bytes);
     }
 
 

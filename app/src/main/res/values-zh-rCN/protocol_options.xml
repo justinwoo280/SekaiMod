@@ -1,0 +1,29 @@
+<resources>
+    <string name="protocol_network">启用的网络</string>
+    <string name="protocol_network_both">TCP 和 UDP</string>
+    <string name="snell_user_key">用户密钥（可选）</string>
+    <string name="snell_reuse">复用 Snell 连接</string>
+    <string name="snell_obfs">Snell v4 混淆方式</string>
+    <string name="snell_obfs_host">混淆主机名</string>
+    <string name="snell_mode">Snell v6 流量整形模式</string>
+    <string name="protocol_advanced">协议高级选项</string>
+    <string name="protocol_duration_hint">时长，例如 30s 或 2m；留空使用核心默认值</string>
+    <string name="anytls_idle_check">空闲会话检查间隔</string>
+    <string name="anytls_idle_timeout">空闲会话超时</string>
+    <string name="anytls_min_idle">最少空闲会话数</string>
+    <string name="anytls_client_metadata">客户端元数据</string>
+    <string name="tuic_udp_over_stream">通过流传输 UDP（sing-box 扩展）</string>
+    <string name="tuic_heartbeat">心跳间隔</string>
+    <string name="hysteria2_obfs_type">Hysteria2 混淆类型</string>
+    <string name="gecko_min_packet_size">Gecko 最小数据包大小（字节，0 为默认）</string>
+    <string name="gecko_max_packet_size">Gecko 最大数据包大小（字节，0 为默认）</string>
+    <string name="hop_interval_max">最大跳端口间隔（秒，0 为固定间隔）</string>
+    <string name="hysteria2_bbr_profile">BBR 配置</string>
+    <string name="hysteria2_disable_chrome_parrot">禁用 Chrome QUIC 模拟</string>
+    <string name="hysteria2_brutal_debug">Brutal 拥塞控制调试日志</string>
+    <string name="ssh_host_key_algorithms">主机密钥算法</string>
+    <string name="ssh_client_version">客户端版本字符串</string>
+    <string name="ssh_ciphers">加密算法</string>
+    <string name="ssh_macs">MAC 算法</string>
+    <string name="ssh_kex_algorithms">密钥交换算法</string>
+</resources>

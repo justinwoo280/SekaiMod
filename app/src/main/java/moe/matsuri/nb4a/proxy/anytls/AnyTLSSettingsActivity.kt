@@ -28,6 +28,10 @@ class AnyTLSSettingsActivity : ProfileSettingsActivity<AnyTLSBean>() {
     private val enableECH = pbm.add(PreferenceBinding(Type.Bool, "enableECH"))
     private val echConfig = pbm.add(PreferenceBinding(Type.Text, "echConfig"))
     private val echQueryServerName = pbm.add(PreferenceBinding(Type.Text, "echQueryServerName"))
+    private val idleSessionCheckInterval = pbm.add(PreferenceBinding(Type.Text, "idleSessionCheckInterval"))
+    private val idleSessionTimeout = pbm.add(PreferenceBinding(Type.Text, "idleSessionTimeout"))
+    private val minIdleSession = pbm.add(PreferenceBinding(Type.TextToInt, "minIdleSession"))
+    private val clientMetadata = pbm.add(PreferenceBinding(Type.Text, "clientMetadata"))
 
     override fun AnyTLSBean.init() {
         pbm.writeToCacheAll(this)
@@ -43,6 +47,7 @@ class AnyTLSSettingsActivity : ProfileSettingsActivity<AnyTLSBean>() {
         rootKey: String?
     ) {
         addPreferencesFromResource(R.xml.anytls_preferences)
+        pbm.setPreferenceFragment(this)
 
         findPreference<EditTextPreference>(Key.SERVER_PORT)!!.apply {
             setOnBindEditTextListener(EditTextPreferenceModifiers.Port)
@@ -50,5 +55,6 @@ class AnyTLSSettingsActivity : ProfileSettingsActivity<AnyTLSBean>() {
         findPreference<EditTextPreference>("password")!!.apply {
             summaryProvider = PasswordSummaryProvider
         }
+        findPreference<EditTextPreference>("minIdleSession")!!.setOnBindEditTextListener(EditTextPreferenceModifiers.Number)
     }
 }

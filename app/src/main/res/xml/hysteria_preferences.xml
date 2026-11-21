@@ -103,6 +103,18 @@
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="@string/protocol_advanced">
+        <moe.matsuri.nb4a.ui.SimpleMenuPreference app:key="obfsType" app:defaultValue="salamander"
+            app:title="@string/hysteria2_obfs_type" app:entries="@array/hysteria2_obfs_types" app:entryValues="@array/hysteria2_obfs_types" app:useSimpleSummaryProvider="true" />
+        <EditTextPreference app:key="geckoMinPacketSize" app:title="@string/gecko_min_packet_size" app:useSimpleSummaryProvider="true" />
+        <EditTextPreference app:key="geckoMaxPacketSize" app:title="@string/gecko_max_packet_size" app:useSimpleSummaryProvider="true" />
+        <EditTextPreference app:key="hopIntervalMax" app:title="@string/hop_interval_max" app:useSimpleSummaryProvider="true" />
+        <moe.matsuri.nb4a.ui.SimpleMenuPreference app:key="bbrProfile" app:defaultValue=""
+            app:title="@string/hysteria2_bbr_profile" app:entries="@array/hysteria2_bbr_profiles" app:entryValues="@array/hysteria2_bbr_profiles" app:useSimpleSummaryProvider="true" />
+        <SwitchPreference app:key="disableChromeParrot" app:title="@string/hysteria2_disable_chrome_parrot" />
+        <SwitchPreference app:key="brutalDebug" app:title="@string/hysteria2_brutal_debug" />
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="ECH">
         <SwitchPreference
             app:icon="@drawable/ic_baseline_security_24"

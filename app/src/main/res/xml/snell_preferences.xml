@@ -1,0 +1,19 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+    <EditTextPreference app:key="name" app:title="@string/profile_name" app:useSimpleSummaryProvider="true" />
+    <PreferenceCategory app:title="@string/proxy_cat">
+        <EditTextPreference app:key="serverAddress" app:title="@string/server_address" app:useSimpleSummaryProvider="true" />
+        <EditTextPreference app:key="serverPort" app:title="@string/server_port" app:useSimpleSummaryProvider="true" />
+        <moe.matsuri.nb4a.ui.SimpleMenuPreference app:key="version" app:defaultValue="4"
+            app:title="@string/protocol_version" app:entries="@array/snell_versions" app:entryValues="@array/snell_versions" app:useSimpleSummaryProvider="true" />
+        <EditTextPreference app:key="psk" app:title="PSK" app:dialogLayout="@layout/layout_password_dialog" />
+        <EditTextPreference app:key="userKey" app:title="@string/snell_user_key" app:dialogLayout="@layout/layout_password_dialog" />
+        <SwitchPreference app:key="reuse" app:title="@string/snell_reuse" />
+        <moe.matsuri.nb4a.ui.SimpleMenuPreference app:key="network" app:defaultValue=""
+            app:title="@string/protocol_network" app:entries="@array/protocol_network_entries" app:entryValues="@array/protocol_network_values" app:useSimpleSummaryProvider="true" />
+        <moe.matsuri.nb4a.ui.SimpleMenuPreference app:key="obfsMode" app:defaultValue="none"
+            app:title="@string/snell_obfs" app:entries="@array/snell_obfs_modes" app:entryValues="@array/snell_obfs_modes" app:useSimpleSummaryProvider="true" />
+        <EditTextPreference app:key="obfsHost" app:title="@string/snell_obfs_host" app:useSimpleSummaryProvider="true" />
+        <moe.matsuri.nb4a.ui.SimpleMenuPreference app:key="mode" app:defaultValue="default"
+            app:title="@string/snell_mode" app:entries="@array/snell_modes" app:entryValues="@array/snell_modes" app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+</PreferenceScreen>

@@ -50,6 +50,9 @@ fun parseTuic(url: String): TuicBean {
         link.queryParameter("disable_sni")?.let {
             if (it == "1") disableSNI = true
         }
+        link.queryParameter("udp_over_stream")?.let { udpOverStream = it == "1" || it == "true" }
+        link.queryParameter("heartbeat")?.let { heartbeat = it }
+        link.queryParameter("zero_rtt_handshake")?.let { reduceRTT = it == "1" || it == "true" }
         link.queryParameter("ech")?.let {
             enableECH = it == "1" || it == "true"
         }
@@ -66,12 +69,15 @@ fun TuicBean.toUri(): String {
     val builder = linkBuilder().username(uuid).password(token).host(serverAddress).port(serverPort)
 
     builder.addQueryParameter("congestion_control", congestionController)
-    builder.addQueryParameter("udp_relay_mode", udpRelayMode)
+    if (!udpOverStream) builder.addQueryParameter("udp_relay_mode", udpRelayMode)
 
     if (sni.isNotBlank()) builder.addQueryParameter("sni", sni)
     if (alpn.isNotBlank()) builder.addQueryParameter("alpn", alpn)
     if (allowInsecure) builder.addQueryParameter("allow_insecure", "1")
     if (disableSNI) builder.addQueryParameter("disable_sni", "1")
+    if (udpOverStream) builder.addQueryParameter("udp_over_stream", "1")
+    if (heartbeat.isNotBlank()) builder.addQueryParameter("heartbeat", heartbeat)
+    if (reduceRTT) builder.addQueryParameter("zero_rtt_handshake", "1")
     if (enableECH) {
         builder.addQueryParameter("ech", "1")
         if (echConfig.isNotBlank()) builder.addQueryParameter("echCfg", echConfig.replace("\n", "|"))
@@ -91,10 +97,10 @@ fun buildSingBoxOutboundTuicBean(bean: TuicBean): SingBoxOptions.Outbound_TUICOp
         uuid = bean.uuid
         password = bean.token
         congestion_control = bean.congestionController
-        when (bean.udpRelayMode) {
-            "quic" -> udp_relay_mode = "quic"
-        }
+        if (!bean.udpOverStream && bean.udpRelayMode == "quic") udp_relay_mode = "quic"
         zero_rtt_handshake = bean.reduceRTT
+        if (bean.udpOverStream) udp_over_stream = true
+        if (bean.heartbeat.isNotBlank()) heartbeat = bean.heartbeat
         tls = SingBoxOptions.OutboundTLSOptions().apply {
             if (bean.sni.isNotBlank()) {
                 server_name = bean.sni

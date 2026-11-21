@@ -1,0 +1,36 @@
+<resources>
+    <string name="protocol_network">Enabled networks</string>
+    <string name="protocol_network_both">TCP and UDP</string>
+    <string name="snell_user_key">User key (optional)</string>
+    <string name="snell_reuse">Reuse Snell connections</string>
+    <string name="snell_obfs">Snell v4 obfuscation</string>
+    <string name="snell_obfs_host">Obfuscation host</string>
+    <string name="snell_mode">Snell v6 shaping mode</string>
+    <string-array name="snell_versions"><item>4</item><item>6</item></string-array>
+    <string-array name="snell_obfs_modes"><item>none</item><item>http</item><item>tls</item></string-array>
+    <string-array name="snell_modes"><item>default</item><item>unshaped</item><item>unsafe-raw</item></string-array>
+    <string-array name="protocol_network_entries"><item>@string/protocol_network_both</item><item>TCP</item><item>UDP</item></string-array>
+    <string-array name="protocol_network_values"><item></item><item>tcp</item><item>udp</item></string-array>
+    <string name="protocol_advanced">Advanced protocol options</string>
+    <string name="protocol_duration_hint">Duration, for example 30s or 2m; leave empty for the core default</string>
+    <string name="anytls_idle_check">Idle session check interval</string>
+    <string name="anytls_idle_timeout">Idle session timeout</string>
+    <string name="anytls_min_idle">Minimum idle sessions</string>
+    <string name="anytls_client_metadata">Client metadata</string>
+    <string name="tuic_udp_over_stream">UDP over stream (sing-box extension)</string>
+    <string name="tuic_heartbeat">Heartbeat interval</string>
+    <string name="hysteria2_obfs_type">Hysteria2 obfuscation type</string>
+    <string name="gecko_min_packet_size">Gecko minimum packet size (bytes, 0 = default)</string>
+    <string name="gecko_max_packet_size">Gecko maximum packet size (bytes, 0 = default)</string>
+    <string name="hop_interval_max">Maximum hop interval (seconds, 0 = fixed interval)</string>
+    <string name="hysteria2_bbr_profile">BBR profile</string>
+    <string name="hysteria2_disable_chrome_parrot">Disable Chrome QUIC imitation</string>
+    <string name="hysteria2_brutal_debug">Brutal congestion-control debug logging</string>
+    <string name="ssh_host_key_algorithms">Host key algorithms</string>
+    <string name="ssh_client_version">Client version string</string>
+    <string name="ssh_ciphers">Encryption algorithms</string>
+    <string name="ssh_macs">MAC algorithms</string>
+    <string name="ssh_kex_algorithms">Key exchange algorithms</string>
+    <string-array name="hysteria2_obfs_types"><item>none</item><item>salamander</item><item>gecko</item></string-array>
+    <string-array name="hysteria2_bbr_profiles"><item></item><item>standard</item><item>conservative</item><item>aggressive</item></string-array>
+</resources>

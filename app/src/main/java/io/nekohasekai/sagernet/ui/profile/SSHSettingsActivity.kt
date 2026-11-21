@@ -9,12 +9,21 @@ import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.database.preference.EditTextPreferenceModifiers
 import io.nekohasekai.sagernet.fmt.ssh.SSHBean
 import moe.matsuri.nb4a.ui.SimpleMenuPreference
+import moe.matsuri.nb4a.proxy.PreferenceBinding
+import moe.matsuri.nb4a.proxy.PreferenceBindingManager
+import moe.matsuri.nb4a.proxy.Type
 
 class SSHSettingsActivity : ProfileSettingsActivity<SSHBean>() {
 
     override fun createEntity() = SSHBean()
+    private val extra = PreferenceBindingManager().apply {
+        for (field in listOf("hostKeyAlgorithms", "clientVersion", "ciphers", "macs", "kexAlgorithms")) {
+            add(PreferenceBinding(Type.Text, field))
+        }
+    }
 
     override fun SSHBean.init() {
+        extra.writeToCacheAll(this)
         DataStore.profileName = name
         DataStore.serverAddress = serverAddress
         DataStore.serverPort = serverPort
@@ -27,6 +36,7 @@ class SSHSettingsActivity : ProfileSettingsActivity<SSHBean>() {
     }
 
     override fun SSHBean.serialize() {
+        extra.fromCacheAll(this)
         name = DataStore.profileName
         serverAddress = DataStore.serverAddress
         serverPort = DataStore.serverPort
@@ -51,6 +61,7 @@ class SSHSettingsActivity : ProfileSettingsActivity<SSHBean>() {
         rootKey: String?,
     ) {
         addPreferencesFromResource(R.xml.ssh_preferences)
+        extra.setPreferenceFragment(this)
         findPreference<EditTextPreference>(Key.SERVER_PORT)!!.apply {
             setOnBindEditTextListener(EditTextPreferenceModifiers.Port)
         }

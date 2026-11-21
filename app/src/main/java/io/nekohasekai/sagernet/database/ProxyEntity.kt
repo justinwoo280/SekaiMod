@@ -42,6 +42,8 @@ import moe.matsuri.nb4a.proxy.config.ConfigBean
 import moe.matsuri.nb4a.proxy.config.ConfigSettingActivity
 import moe.matsuri.nb4a.proxy.neko.*
 import moe.matsuri.nb4a.proxy.shadowtls.ShadowTLSSettingsActivity
+import moe.matsuri.nb4a.proxy.snell.SnellBean
+import moe.matsuri.nb4a.proxy.snell.SnellSettingsActivity
 
 @Entity(
     tableName = "proxy_entities", indices = [Index("groupId", name = "groupId")]
@@ -72,6 +74,7 @@ data class ProxyEntity(
     var shadowTLSBean: ShadowTLSBean? = null,
     var anyTLSBean: AnyTLSBean? = null,
     var ewpBean: EwpBean? = null,
+    var snellBean: SnellBean? = null,
     var chainBean: ChainBean? = null,
     var nekoBean: NekoBean? = null,
     var configBean: ConfigBean? = null,
@@ -95,6 +98,7 @@ data class ProxyEntity(
         const val TYPE_MIERU = 21
         const val TYPE_ANYTLS = 22
         const val TYPE_EWP = 23
+        const val TYPE_SNELL = 24
 
         const val TYPE_CONFIG = 998
         const val TYPE_NEKO = 999
@@ -180,6 +184,7 @@ data class ProxyEntity(
             TYPE_SHADOWTLS -> shadowTLSBean = KryoConverters.shadowTLSDeserialize(byteArray)
             TYPE_ANYTLS -> anyTLSBean = KryoConverters.anyTLSDeserialize(byteArray)
             TYPE_EWP -> ewpBean = KryoConverters.ewpDeserialize(byteArray)
+            TYPE_SNELL -> snellBean = KryoConverters.snellDeserialize(byteArray)
             TYPE_CHAIN -> chainBean = KryoConverters.chainDeserialize(byteArray)
             TYPE_NEKO -> nekoBean = KryoConverters.nekoDeserialize(byteArray)
             TYPE_CONFIG -> configBean = KryoConverters.configDeserialize(byteArray)
@@ -202,6 +207,7 @@ data class ProxyEntity(
         TYPE_SHADOWTLS -> "ShadowTLS"
         TYPE_ANYTLS -> "AnyTLS"
         TYPE_EWP -> "EWP"
+        TYPE_SNELL -> "Snell v${snellBean!!.version}"
         TYPE_CHAIN -> chainName
         TYPE_NEKO -> nekoBean!!.displayType()
         TYPE_CONFIG -> configBean!!.displayType()
@@ -228,6 +234,7 @@ data class ProxyEntity(
             TYPE_SHADOWTLS -> shadowTLSBean
             TYPE_ANYTLS -> anyTLSBean
             TYPE_EWP -> ewpBean
+            TYPE_SNELL -> snellBean
             TYPE_CHAIN -> chainBean
             TYPE_NEKO -> nekoBean
             TYPE_CONFIG -> configBean
@@ -247,6 +254,7 @@ data class ProxyEntity(
             is SSHBean -> false
             is WireGuardBean -> false
             is ShadowTLSBean -> false
+            is SnellBean -> false
             is NekoBean -> false
             is ConfigBean -> false
             else -> true
@@ -367,6 +375,7 @@ data class ProxyEntity(
         shadowTLSBean = null
         anyTLSBean = null
         ewpBean = null
+        snellBean = null
         chainBean = null
         configBean = null
         nekoBean = null
@@ -447,6 +456,11 @@ data class ProxyEntity(
                 ewpBean = bean
             }
 
+            is SnellBean -> {
+                type = TYPE_SNELL
+                snellBean = bean
+            }
+
             is ChainBean -> {
                 type = TYPE_CHAIN
                 chainBean = bean
@@ -485,6 +499,7 @@ data class ProxyEntity(
                 TYPE_SHADOWTLS -> ShadowTLSSettingsActivity::class.java
                 TYPE_ANYTLS -> AnyTLSSettingsActivity::class.java
                 TYPE_EWP -> EwpSettingsActivity::class.java
+                TYPE_SNELL -> SnellSettingsActivity::class.java
                 TYPE_CHAIN -> ChainSettingsActivity::class.java
                 TYPE_CONFIG -> ConfigSettingActivity::class.java
                 else -> throw IllegalArgumentException()

@@ -53,6 +53,13 @@
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="@string/protocol_advanced">
+        <EditTextPreference app:key="idleSessionCheckInterval" app:title="@string/anytls_idle_check" app:dialogMessage="@string/protocol_duration_hint" app:useSimpleSummaryProvider="true" />
+        <EditTextPreference app:key="idleSessionTimeout" app:title="@string/anytls_idle_timeout" app:dialogMessage="@string/protocol_duration_hint" app:useSimpleSummaryProvider="true" />
+        <EditTextPreference app:key="minIdleSession" app:title="@string/anytls_min_idle" app:useSimpleSummaryProvider="true" />
+        <EditTextPreference app:key="clientMetadata" app:title="@string/anytls_client_metadata" app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="ECH">
         <SwitchPreference
             app:icon="@drawable/ic_baseline_security_24"

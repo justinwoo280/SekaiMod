@@ -58,4 +58,11 @@
     </PreferenceCategory>
 
 
+    <PreferenceCategory app:title="@string/protocol_advanced">
+        <EditTextPreference app:key="hostKeyAlgorithms" app:title="@string/ssh_host_key_algorithms" app:useSimpleSummaryProvider="true" />
+        <EditTextPreference app:key="clientVersion" app:title="@string/ssh_client_version" app:useSimpleSummaryProvider="true" />
+        <EditTextPreference app:key="ciphers" app:title="@string/ssh_ciphers" app:useSimpleSummaryProvider="true" />
+        <EditTextPreference app:key="macs" app:title="@string/ssh_macs" app:useSimpleSummaryProvider="true" />
+        <EditTextPreference app:key="kexAlgorithms" app:title="@string/ssh_kex_algorithms" app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
 </PreferenceScreen>

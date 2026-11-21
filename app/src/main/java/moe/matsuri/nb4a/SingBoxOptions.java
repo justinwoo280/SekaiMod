@@ -622,6 +622,9 @@ public class SingBoxOptions {
 
         public String password;
 
+        public Integer min_packet_size;
+        public Integer max_packet_size;
+
     }
 
     public static class Hysteria2User extends SingBoxOption {
@@ -4151,6 +4154,10 @@ public class SingBoxOptions {
 
         public String client_version;
 
+        public List<String> cipher;
+        public List<String> mac;
+        public List<String> kex_algorithm;
+
     }
 
     public static class Outbound_ShadowTLSOptions extends Outbound {
@@ -4361,7 +4368,7 @@ public class SingBoxOptions {
 
         public Boolean zero_rtt_handshake;
 
-        public Long heartbeat;
+        public String heartbeat;
 
         public String network;
 
@@ -4434,6 +4441,11 @@ public class SingBoxOptions {
         public List<String> server_ports;
 
         public String hop_interval;
+
+        public String hop_interval_max;
+        public String bbr_profile;
+        public Boolean disable_chrome_parrot;
+        public Boolean brutal_debug;
 
     }
 
@@ -4794,6 +4806,19 @@ public class SingBoxOptions {
 
     }
 
+    public static class Outbound_SnellOptions extends Outbound {
+        public String server;
+        public Integer server_port;
+        public Integer version;
+        public String psk;
+        public String userkey;
+        public Boolean reuse;
+        public String network;
+        public String obfs_mode;
+        public String obfs_host;
+        public String mode;
+    }
+
     public static class Outbound_AnyTLSOptions extends Outbound {
 
         // Generate note: nested type DialerOptions
@@ -4842,6 +4867,9 @@ public class SingBoxOptions {
         public String idle_session_check_interval;
 
         public String idle_session_timeout;
+
+        public Integer min_idle_session;
+        public String client_metadata;
 
     }
 

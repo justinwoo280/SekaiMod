@@ -11,12 +11,21 @@ import io.nekohasekai.sagernet.database.preference.EditTextPreferenceModifiers
 import io.nekohasekai.sagernet.fmt.hysteria.HysteriaBean
 import io.nekohasekai.sagernet.ktx.applyDefaultValues
 import moe.matsuri.nb4a.ui.SimpleMenuPreference
+import moe.matsuri.nb4a.proxy.PreferenceBinding
+import moe.matsuri.nb4a.proxy.PreferenceBindingManager
+import moe.matsuri.nb4a.proxy.Type
 
 class HysteriaSettingsActivity : ProfileSettingsActivity<HysteriaBean>() {
 
     override fun createEntity() = HysteriaBean().applyDefaultValues()
+    private val extra = PreferenceBindingManager().apply {
+        for (field in listOf("obfsType", "bbrProfile")) add(PreferenceBinding(Type.Text, field))
+        for (field in listOf("geckoMinPacketSize", "geckoMaxPacketSize", "hopIntervalMax")) add(PreferenceBinding(Type.TextToInt, field))
+        for (field in listOf("disableChromeParrot", "brutalDebug")) add(PreferenceBinding(Type.Bool, field))
+    }
 
     override fun HysteriaBean.init() {
+        extra.writeToCacheAll(this)
         DataStore.profileName = name
         DataStore.protocolVersion = protocolVersion
         DataStore.serverAddress = serverAddress
@@ -41,6 +50,7 @@ class HysteriaSettingsActivity : ProfileSettingsActivity<HysteriaBean>() {
     }
 
     override fun HysteriaBean.serialize() {
+        extra.fromCacheAll(this)
         name = DataStore.profileName
         protocolVersion = DataStore.protocolVersion
         serverAddress = DataStore.serverAddress
@@ -69,6 +79,7 @@ class HysteriaSettingsActivity : ProfileSettingsActivity<HysteriaBean>() {
         rootKey: String?,
     ) {
         addPreferencesFromResource(R.xml.hysteria_preferences)
+        extra.setPreferenceFragment(this)
 
         val authType = findPreference<SimpleMenuPreference>(Key.SERVER_AUTH_TYPE)!!
         val authPayload = findPreference<EditTextPreference>(Key.SERVER_PASSWORD)!!
@@ -80,8 +91,18 @@ class HysteriaSettingsActivity : ProfileSettingsActivity<HysteriaBean>() {
 
         val protocol = findPreference<SimpleMenuPreference>(Key.SERVER_PROTOCOL)!!
         val alpn = findPreference<EditTextPreference>(Key.SERVER_ALPN)!!
+        val obfsType = findPreference<SimpleMenuPreference>("obfsType")!!
+        val versionPreference = findPreference<SimpleMenuPreference>(Key.PROTOCOL_VERSION)!!
+        fun updateGecko(version: Int, obfs: String) {
+            findPreference<EditTextPreference>("geckoMinPacketSize")!!.isVisible = version == 2 && obfs == "gecko"
+            findPreference<EditTextPreference>("geckoMaxPacketSize")!!.isVisible = version == 2 && obfs == "gecko"
+        }
 
         fun updateVersion(v: Int) {
+            for (key in listOf("obfsType", "bbrProfile", "hopIntervalMax", "disableChromeParrot", "brutalDebug")) {
+                findPreference<androidx.preference.Preference>(key)!!.isVisible = v == 2
+            }
+            updateGecko(v, obfsType.value)
             if (v == 2) {
                 authPayload.isVisible = true
                 //
@@ -89,12 +110,6 @@ class HysteriaSettingsActivity : ProfileSettingsActivity<HysteriaBean>() {
                 protocol.isVisible = false
                 alpn.isVisible = false
                 //
-                findPreference<EditTextPreference>(Key.SERVER_STREAM_RECEIVE_WINDOW)!!.isVisible =
-                    false
-                findPreference<EditTextPreference>(Key.SERVER_CONNECTION_RECEIVE_WINDOW)!!.isVisible =
-                    false
-                findPreference<SwitchPreference>(Key.SERVER_DISABLE_MTU_DISCOVERY)!!.isVisible =
-                    false
                 //
                 authPayload.title = resources.getString(R.string.password)
             } else {
@@ -113,7 +128,11 @@ class HysteriaSettingsActivity : ProfileSettingsActivity<HysteriaBean>() {
                 authPayload.title = resources.getString(R.string.hysteria_auth_payload)
             }
         }
-        findPreference<SimpleMenuPreference>(Key.PROTOCOL_VERSION)!!.setOnPreferenceChangeListener { _, newValue ->
+        obfsType.setOnPreferenceChangeListener { _, newValue ->
+            updateGecko(versionPreference.value.toInt(), newValue.toString())
+            true
+        }
+        versionPreference.setOnPreferenceChangeListener { _, newValue ->
             updateVersion(newValue.toString().toIntOrNull() ?: 1)
             true
         }
@@ -141,6 +160,9 @@ class HysteriaSettingsActivity : ProfileSettingsActivity<HysteriaBean>() {
 
         findPreference<EditTextPreference>(Key.SERVER_HOP_INTERVAL)!!.apply {
             setOnBindEditTextListener(EditTextPreferenceModifiers.Number)
+        }
+        for (key in listOf("geckoMinPacketSize", "geckoMaxPacketSize", "hopIntervalMax")) {
+            findPreference<EditTextPreference>(key)!!.setOnBindEditTextListener(EditTextPreferenceModifiers.Number)
         }
     }
 

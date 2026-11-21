@@ -95,6 +95,14 @@ fun parseHysteria2(url: String): HysteriaBean {
         link.queryParameter("obfs-password")?.also {
             obfuscation = it
         }
+        link.queryParameter("obfs")?.let { obfsType = it }
+        link.queryParameter("obfs-min-packet-size")?.let { geckoMinPacketSize = it.toInt() }
+        link.queryParameter("obfs-max-packet-size")?.let { geckoMaxPacketSize = it.toInt() }
+        link.queryParameter("hop-interval")?.let { hopInterval = it.toInt() }
+        link.queryParameter("hop-interval-max")?.let { hopIntervalMax = it.toInt() }
+        link.queryParameter("bbr-profile")?.let { bbrProfile = it }
+        link.queryParameter("disable-chrome-parrot")?.let { disableChromeParrot = it == "1" || it == "true" }
+        link.queryParameter("brutal-debug")?.let { brutalDebug = it == "1" || it == "true" }
         link.queryParameter("ech")?.also {
             enableECH = it == "1" || it == "true"
         }
@@ -127,7 +135,7 @@ fun HysteriaBean.toUri(): String {
         .port(getFirstPort(serverPorts))
         .username(un)
         .password(pw)
-    if (isMultiPort(displayAddress())) {
+    if (serverPorts.toIntOrNull() == null) {
         builder.addQueryParameter("mport", serverPorts)
     }
     if (name.isNotBlank()) {
@@ -165,10 +173,19 @@ fun HysteriaBean.toUri(): String {
         if (sni.isNotBlank()) {
             builder.addQueryParameter("sni", sni)
         }
-        if (obfuscation.isNotBlank()) {
-            builder.addQueryParameter("obfs", "salamander")
+        if (obfuscation.isNotBlank() && obfsType != "none") {
+            builder.addQueryParameter("obfs", obfsType)
             builder.addQueryParameter("obfs-password", obfuscation)
+            if (obfsType == "gecko") {
+                if (geckoMinPacketSize > 0) builder.addQueryParameter("obfs-min-packet-size", geckoMinPacketSize.toString())
+                if (geckoMaxPacketSize > 0) builder.addQueryParameter("obfs-max-packet-size", geckoMaxPacketSize.toString())
+            }
         }
+        builder.addQueryParameter("hop-interval", hopInterval.toString())
+        if (hopIntervalMax > 0) builder.addQueryParameter("hop-interval-max", hopIntervalMax.toString())
+        if (bbrProfile.isNotBlank()) builder.addQueryParameter("bbr-profile", bbrProfile)
+        if (disableChromeParrot) builder.addQueryParameter("disable-chrome-parrot", "1")
+        if (brutalDebug) builder.addQueryParameter("brutal-debug", "1")
     }
     if (enableECH) {
         builder.addQueryParameter("ech", "1")
@@ -282,12 +299,11 @@ fun isMultiPort(hyAddr: String): Boolean {
 }
 
 fun getFirstPort(portStr: String): Int {
-    return portStr.substringBefore(":").substringBefore(",").toIntOrNull() ?: 443
+    return portStr.substringBefore(",").substringBefore("-").substringBefore(":").trim().toIntOrNull() ?: 443
 }
 
 fun HysteriaBean.canUseSingBox(): Boolean {
-    if (protocol != HysteriaBean.PROTOCOL_UDP) return false
-    return true
+    return protocolVersion == 2 || protocol == HysteriaBean.PROTOCOL_UDP
 }
 
 fun buildSingBoxOutboundHysteriaBean(bean: HysteriaBean): SingBoxOptions.SingBoxOption {
@@ -342,12 +358,25 @@ fun buildSingBoxOutboundHysteriaBean(bean: HysteriaBean): SingBoxOptions.SingBox
                 server_ports = hopPortsToSingboxList(bean.serverPorts)
             }
             hop_interval = "${bean.hopInterval}s"
+            require(bean.hopIntervalMax == 0 || bean.hopIntervalMax >= bean.hopInterval) { "Maximum hop interval must not be shorter than the minimum" }
+            if (bean.hopIntervalMax > 0) hop_interval_max = "${bean.hopIntervalMax}s"
+            require(bean.bbrProfile in listOf("", "standard", "conservative", "aggressive")) { "Unknown Hysteria2 BBR profile" }
+            if (bean.bbrProfile.isNotBlank()) bbr_profile = bean.bbrProfile
+            if (bean.disableChromeParrot) disable_chrome_parrot = true
+            if (bean.brutalDebug) brutal_debug = true
             up_mbps = bean.uploadMbps
             down_mbps = bean.downloadMbps
-            if (bean.obfuscation.isNotBlank()) {
+            require(bean.obfsType in listOf("none", "salamander", "gecko")) { "Unknown Hysteria2 obfuscation type" }
+            if (bean.obfuscation.isNotBlank() && bean.obfsType != "none") {
                 obfs = SingBoxOptions.Hysteria2Obfs().apply {
-                    type = "salamander"
+                    type = bean.obfsType
                     password = bean.obfuscation
+                    if (bean.obfsType == "gecko") {
+                        require(bean.geckoMinPacketSize >= 0 && bean.geckoMaxPacketSize >= 0) { "Gecko packet sizes must not be negative" }
+                        require(bean.geckoMinPacketSize == 0 || bean.geckoMaxPacketSize == 0 || bean.geckoMinPacketSize <= bean.geckoMaxPacketSize) { "Invalid Gecko packet size range" }
+                        if (bean.geckoMinPacketSize > 0) min_packet_size = bean.geckoMinPacketSize
+                        if (bean.geckoMaxPacketSize > 0) max_packet_size = bean.geckoMaxPacketSize
+                    }
                 }
             }
             disable_path_mtu_discovery = bean.disableMtuDiscovery
@@ -391,12 +420,13 @@ private fun SingBoxOptions.OutboundTLSOptions.applyEch(bean: HysteriaBean) {
 }
 
 fun hopPortsToSingboxList(s: String): List<String> {
-    return s.split(",").mapNotNull {
-        val pRange = it.replace("-", ":")
-        if (pRange.split(":").size == 2) {
-            pRange
-        } else {
-            null
-        }
+    return s.split(",").map {
+        val range = it.trim().replace("-", ":")
+        val bounds = range.split(":")
+        require(bounds.size in 1..2) { "Invalid port range: $it" }
+        val ports = bounds.map { part -> part.toIntOrNull() ?: error("Invalid port: $part") }
+        require(ports.all { port -> port in 1..65535 } && ports.first() <= ports.last()) { "Invalid port range: $it" }
+        // The core's server_ports parser requires ranges, even for one port.
+        if (ports.size == 1) "${ports[0]}:${ports[0]}" else ports.joinToString(":")
     }
 }

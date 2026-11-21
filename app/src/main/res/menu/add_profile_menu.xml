@@ -67,6 +67,9 @@
                         android:id="@+id/action_new_ewp"
                         android:title="@string/action_ewp" />
                     <item
+                        android:id="@+id/action_new_snell"
+                        android:title="Snell" />
+                    <item
                         android:id="@+id/action_new_ssh"
                         android:title="@string/action_ssh" />
                     <item

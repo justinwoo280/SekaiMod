@@ -197,6 +197,10 @@
             android:name="moe.matsuri.nb4a.proxy.ewp.EwpSettingsActivity"
             android:configChanges="uiMode" />
         <activity
+            android:name="moe.matsuri.nb4a.proxy.snell.SnellSettingsActivity"
+            android:configChanges="uiMode"
+            android:exported="false" />
+        <activity
             android:name="moe.matsuri.nb4a.proxy.config.ConfigSettingActivity"
             android:configChanges="uiMode" />
         <activity

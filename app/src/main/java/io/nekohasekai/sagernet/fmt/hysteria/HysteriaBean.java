@@ -34,6 +34,13 @@ public class HysteriaBean extends AbstractBean {
     public Integer connectionReceiveWindow;
     public Boolean disableMtuDiscovery;
     public Integer hopInterval;
+    public String obfsType;
+    public Integer geckoMinPacketSize;
+    public Integer geckoMaxPacketSize;
+    public Integer hopIntervalMax;
+    public String bbrProfile;
+    public Boolean disableChromeParrot;
+    public Boolean brutalDebug;
 
     // HY1
 
@@ -84,11 +91,18 @@ public class HysteriaBean extends AbstractBean {
         if (disableMtuDiscovery == null) disableMtuDiscovery = false;
         if (hopInterval == null) hopInterval = 10;
         if (serverPorts == null) serverPorts = "443";
+        if (obfsType == null) obfsType = "salamander";
+        if (geckoMinPacketSize == null) geckoMinPacketSize = 0;
+        if (geckoMaxPacketSize == null) geckoMaxPacketSize = 0;
+        if (hopIntervalMax == null) hopIntervalMax = 0;
+        if (bbrProfile == null) bbrProfile = "";
+        if (disableChromeParrot == null) disableChromeParrot = false;
+        if (brutalDebug == null) brutalDebug = false;
     }
 
     @Override
     public void serialize(ByteBufferOutput output) {
-        output.writeInt(8);
+        output.writeInt(9);
         super.serialize(output);
 
         output.writeInt(protocolVersion);
@@ -113,6 +127,13 @@ public class HysteriaBean extends AbstractBean {
         output.writeBoolean(enableECH);
         output.writeString(echConfig);
         output.writeString(echQueryServerName);
+        output.writeString(obfsType);
+        output.writeInt(geckoMinPacketSize);
+        output.writeInt(geckoMaxPacketSize);
+        output.writeInt(hopIntervalMax);
+        output.writeString(bbrProfile);
+        output.writeBoolean(disableChromeParrot);
+        output.writeBoolean(brutalDebug);
     }
 
     @Override
@@ -161,6 +182,15 @@ public class HysteriaBean extends AbstractBean {
             enableECH = input.readBoolean();
             echConfig = input.readString();
             echQueryServerName = input.readString();
+        }
+        if (version >= 9) {
+            obfsType = input.readString();
+            geckoMinPacketSize = input.readInt();
+            geckoMaxPacketSize = input.readInt();
+            hopIntervalMax = input.readInt();
+            bbrProfile = input.readString();
+            disableChromeParrot = input.readBoolean();
+            brutalDebug = input.readBoolean();
         }
     }
 

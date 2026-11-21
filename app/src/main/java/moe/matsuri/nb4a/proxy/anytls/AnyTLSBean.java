@@ -37,6 +37,10 @@ public class AnyTLSBean extends AbstractBean {
     public String echConfig;
     public Boolean enableECH;
     public String echQueryServerName;
+    public String idleSessionCheckInterval;
+    public String idleSessionTimeout;
+    public Integer minIdleSession;
+    public String clientMetadata;
 
     @Override
     public void initializeDefaultValues() {
@@ -50,11 +54,15 @@ public class AnyTLSBean extends AbstractBean {
         if (echConfig == null) echConfig = "";
         if (enableECH == null) enableECH = !echConfig.isEmpty();
         if (echQueryServerName == null) echQueryServerName = "";
+        if (idleSessionCheckInterval == null) idleSessionCheckInterval = "";
+        if (idleSessionTimeout == null) idleSessionTimeout = "";
+        if (minIdleSession == null) minIdleSession = 0;
+        if (clientMetadata == null) clientMetadata = "";
     }
 
     @Override
     public void serialize(ByteBufferOutput output) {
-        output.writeInt(1);
+        output.writeInt(2);
         super.serialize(output);
         output.writeString(password);
         output.writeString(sni);
@@ -65,6 +73,10 @@ public class AnyTLSBean extends AbstractBean {
         output.writeString(echConfig);
         output.writeBoolean(enableECH);
         output.writeString(echQueryServerName);
+        output.writeString(idleSessionCheckInterval);
+        output.writeString(idleSessionTimeout);
+        output.writeInt(minIdleSession);
+        output.writeString(clientMetadata);
     }
 
     @Override
@@ -81,6 +93,12 @@ public class AnyTLSBean extends AbstractBean {
         if (version >= 1) {
             enableECH = input.readBoolean();
             echQueryServerName = input.readString();
+        }
+        if (version >= 2) {
+            idleSessionCheckInterval = input.readString();
+            idleSessionTimeout = input.readString();
+            minIdleSession = input.readInt();
+            clientMetadata = input.readString();
         }
     }
 

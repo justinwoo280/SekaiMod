@@ -36,6 +36,8 @@ import moe.matsuri.nb4a.proxy.ewp.buildSingBoxOutboundEwpBean
 import moe.matsuri.nb4a.proxy.config.ConfigBean
 import moe.matsuri.nb4a.proxy.shadowtls.ShadowTLSBean
 import moe.matsuri.nb4a.proxy.shadowtls.buildSingBoxOutboundShadowTLSBean
+import moe.matsuri.nb4a.proxy.snell.SnellBean
+import moe.matsuri.nb4a.proxy.snell.buildSingBoxOutboundSnellBean
 import moe.matsuri.nb4a.utils.JavaUtil.gson
 import moe.matsuri.nb4a.utils.Util
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -480,6 +482,9 @@ fun buildConfig(
 
                         is AnyTLSBean ->
                             buildSingBoxOutboundAnyTLSBean(bean)
+
+                        is SnellBean ->
+                            buildSingBoxOutboundSnellBean(bean)
 
                         is EwpBean ->
                             buildSingBoxOutboundEwpBean(bean)
