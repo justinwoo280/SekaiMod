@@ -38,7 +38,6 @@ import moe.matsuri.nb4a.proxy.shadowtls.ShadowTLSBean
 import moe.matsuri.nb4a.proxy.shadowtls.buildSingBoxOutboundShadowTLSBean
 import moe.matsuri.nb4a.utils.JavaUtil.gson
 import moe.matsuri.nb4a.utils.Util
-import moe.matsuri.nb4a.utils.listByLineOrComma
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 const val TAG_MIXED = "mixed-in"
@@ -353,26 +352,9 @@ fun buildConfig(
                 if (forTest) null else SingBoxOptionsUtil.domainStrategy("server")
             )
         }
-        // sing-box 1.13 migration: inbound-level sniff and domain_strategy
-        // were removed; the equivalent behaviour is expressed as route
-        // rule actions running before any user-supplied rule. We add a
-        // global 'sniff' (so destination domains get extracted from
-        // ClientHello / HTTP Host) and a 'resolve' (so the resolved IP
-        // strategy still honours the user's IPv6 preference).
-        if (needSniff) {
-            route.rules.add(Rule_DefaultOptions().apply {
-                action = "sniff"
-            })
-        }
-        run {
-            val resolveStrategy = genDomainStrategy(DataStore.resolveDestination)
-            if (!resolveStrategy.isNullOrEmpty()) {
-                route.rules.add(Rule_DefaultOptions().apply {
-                    action = "resolve"
-                    strategy = resolveStrategy
-                })
-            }
-        }
+        route.rules.addAll(buildInboundRouteRules(
+            needSniff, genDomainStrategy(DataStore.resolveDestination), !forTest
+        ))
 
         // returns outbound tag
         fun buildChain(
@@ -644,112 +626,27 @@ fun buildConfig(
                 }
                 PackageCache[it]?.takeIf { uid -> uid >= 1000 }
             }.toHashSet().filterNotNull()
-            val ruleSets = mutableListOf<RuleSet>()
-
-            val ruleObj = Rule_DefaultOptions().apply {
-                if (uidList.isNotEmpty()) {
-                    PackageCache.awaitLoadSync()
-                    user_id = uidList
-                }
-                var domainList: List<String>? = null
-                if (rule.domains.isNotBlank()) {
-                    domainList = rule.domains.listByLineOrComma()
-                    makeSingBoxRule(domainList, false)
-                }
-                if (rule.ip.isNotBlank()) {
-                    makeSingBoxRule(rule.ip.listByLineOrComma(), true)
-                }
-
-                if (rule_set != null) generateRuleSet(rule_set, ruleSets)
-
-                if (rule.port.isNotBlank()) {
-                    port = mutableListOf<Int>()
-                    port_range = mutableListOf<String>()
-                    rule.port.listByLineOrComma().map {
-                        if (it.contains(":")) {
-                            port_range.add(it)
-                        } else {
-                            it.toIntOrNull()?.apply { port.add(this) }
-                        }
-                    }
-                }
-                if (rule.sourcePort.isNotBlank()) {
-                    source_port = mutableListOf<Int>()
-                    source_port_range = mutableListOf<String>()
-                    rule.sourcePort.listByLineOrComma().map {
-                        if (it.contains(":")) {
-                            source_port_range.add(it)
-                        } else {
-                            it.toIntOrNull()?.apply { source_port.add(this) }
-                        }
-                    }
-                }
-                if (rule.network.isNotBlank()) {
-                    network = listOf(rule.network)
-                }
-                if (rule.source.isNotBlank()) {
-                    source_ip_cidr = rule.source.listByLineOrComma()
-                }
-                if (rule.protocol.isNotBlank()) {
-                    protocol = rule.protocol.listByLineOrComma()
-                }
-
-                fun makeDnsRuleObj(): DNSRule_DefaultOptions {
-                    return DNSRule_DefaultOptions().apply {
-                        if (uidList.isNotEmpty()) user_id = uidList
-                        domainList?.let { makeSingBoxRule(it) }
-                    }
-                }
-
-                when (rule.outbound) {
-                    -1L -> {
-                        userDNSRuleList += makeDnsRuleObj().apply { server = "dns-direct" }
-                    }
-
-                    0L -> {
-                        if (useFakeDns) userDNSRuleList += makeDnsRuleObj().apply {
-                            server = "dns-fake"
-                            inbound = listOf("tun-in")
-                        }
-                        userDNSRuleList += makeDnsRuleObj().apply {
-                            server = "dns-remote"
-                        }
-                    }
-
-                    -2L -> {
-                        userDNSRuleList += makeDnsRuleObj().apply {
-                            action = "predefined"
-                            rcode = "NOERROR"
-                        }
-                    }
-                }
-
-                outbound = when (val outId = rule.outbound) {
-                    0L -> TAG_PROXY
-                    -1L -> TAG_BYPASS
-                    -2L -> TAG_BLOCK
-                    else -> if (outId == proxy.id) TAG_PROXY else tagMap[outId] ?: ""
-                }
-
-                _hack_custom_config = rule.config
+            val ruleObj = buildUserRouteRule(rule, uidList) ?: continue
+            ruleObj.outbound = when (val outId = rule.outbound) {
+                0L -> TAG_PROXY
+                -1L -> TAG_BYPASS
+                -2L -> TAG_BLOCK
+                else -> if (outId == proxy.id) TAG_PROXY else tagMap[outId] ?: ""
             }
-
-            if (!ruleObj.checkEmpty()) {
-                if (ruleObj.outbound.isNullOrBlank()) {
-                    Toast.makeText(
-                        SagerNet.application,
-                        "Warning: " + rule.displayName() + ": A non-existent outbound was specified.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                } else {
-                    // block 改用新的写法
-                    if (ruleObj.outbound == TAG_BLOCK) {
-                        ruleObj.outbound = null
-                        ruleObj.action = "reject"
-                    }
-                    route.rules.add(ruleObj)
-                    route.rule_set.addAll(ruleSets)
+            if (ruleObj.outbound.isNullOrBlank()) {
+                Toast.makeText(
+                    SagerNet.application,
+                    "Warning: " + rule.displayName() + ": A non-existent outbound was specified.",
+                    Toast.LENGTH_LONG
+                ).show()
+            } else {
+                userDNSRuleList.addAll(buildUserDnsRules(ruleObj, useFakeDns))
+                ruleObj.rule_set?.let { generateRuleSet(it, route.rule_set) }
+                if (ruleObj.outbound == TAG_BLOCK) {
+                    ruleObj.outbound = null
+                    ruleObj.action = "reject"
                 }
+                route.rules.add(ruleObj)
             }
         }
 
@@ -825,37 +722,8 @@ fun buildConfig(
 
         dns.final_ = if (forTest) "dns-direct" else "dns-remote"
 
-        // dns object user rules
-        if (enableDnsRouting) {
-            userDNSRuleList.forEach {
-                if (!it.checkEmpty()) dns.rules.add(it)
-            }
-        }
-
-        if (forTest) {
-            dns.rules = listOf()
-        } else {
-            // built-in DNS rules
-            route.rules.add(0, Rule_DefaultOptions().apply {
-                protocol = listOf("dns")
-                action = "hijack-dns"
-            })
-            route.rules.add(0, Rule_DefaultOptions().apply {
-                port = listOf(53)
-                action = "hijack-dns"
-            })
-            if (DataStore.bypassLanInCore) {
-                route.rules.add(Rule_DefaultOptions().apply {
-                    outbound = TAG_BYPASS
-                    ip_is_private = true
-                })
-            }
-            // block mcast
-            route.rules.add(Rule_DefaultOptions().apply {
-                ip_cidr = listOf("224.0.0.0/3", "ff00::/8")
-                source_ip_cidr = listOf("224.0.0.0/3", "ff00::/8")
-                action = "reject"
-            })
+        if (!forTest) {
+            route.rules.addAll(buildBuiltinRouteRules(DataStore.bypassLanInCore))
             // FakeDNS obj
             if (useFakeDns) {
                 dns.servers.add(DNSServerOptions().apply {
@@ -864,30 +732,12 @@ fun buildConfig(
                     inet4_range = "198.18.0.0/15"
                     inet6_range = "fc00::/18"
                 })
-                dns.rules.add(DNSRule_DefaultOptions().apply {
-                    inbound = listOf("tun-in")
-                    server = "dns-fake"
-                    disable_cache = true
-                })
-            }
-            // Outbound-generated lookups use route.default_domain_resolver in 1.14.
-            // force bypass (always top DNS rule)
-            if (domainListDNSDirectForce.isNotEmpty()) {
-                dns.rules.add(0, DNSRule_DefaultOptions().apply {
-                    makeSingBoxRule(domainListDNSDirectForce.toHashSet().toList())
-                    server = "dns-direct"
-                })
-            }
-            // ECH bootstrap queries must never route through the proxy
-            // (they are what brings the proxy up) — see collectEchPublicName.
-            if (echPublicNames.isNotEmpty()) {
-                dns.rules.add(0, DNSRule_DefaultOptions().apply {
-                    query_type = listOf("HTTPS", "SVCB")
-                    domain = echPublicNames.distinct()
-                    server = "dns-direct"
-                })
             }
         }
+        dns.rules = buildDnsRules(
+            userDNSRuleList, enableDnsRouting, useFakeDns,
+            domainListDNSDirectForce, echPublicNames, forTest
+        )
 
         if (!forTest) _hack_custom_config = DataStore.globalCustomConfig
     }.let {

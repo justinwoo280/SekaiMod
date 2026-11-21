@@ -41,7 +41,7 @@ fun SingBoxOptions.DNSRule_DefaultOptions.makeSingBoxRule(list: List<String>) {
         } else if (it.startsWith("domain:")) {
             domain_suffix.plusAssign(it.removePrefix("domain:").lowercase())
         } else if (it.startsWith("regexp:")) {
-            domain_regex.plusAssign(it.removePrefix("regexp:").lowercase())
+            domain_regex.plusAssign(it.removePrefix("regexp:"))
         } else if (it.startsWith("keyword:")) {
             domain_keyword.plusAssign(it.removePrefix("keyword:").lowercase())
         } else {
@@ -61,14 +61,17 @@ fun SingBoxOptions.DNSRule_DefaultOptions.makeSingBoxRule(list: List<String>) {
 }
 
 fun SingBoxOptions.DNSRule_DefaultOptions.checkEmpty(): Boolean {
-	if (!action.isNullOrBlank()) return false
-	if (!server.isNullOrBlank()) return false
+    // An action/server is a result, not a match condition. Treating it as a
+    // condition turns IP-only routing rules into catch-all DNS rules.
     if (rule_set?.isNotEmpty() == true) return false
     if (domain?.isNotEmpty() == true) return false
     if (domain_suffix?.isNotEmpty() == true) return false
     if (domain_regex?.isNotEmpty() == true) return false
     if (domain_keyword?.isNotEmpty() == true) return false
     if (user_id?.isNotEmpty() == true) return false
+    if (source_ip_cidr?.isNotEmpty() == true) return false
+    if (inbound?.isNotEmpty() == true) return false
+    if (query_type?.isNotEmpty() == true) return false
     return true
 }
 
@@ -97,11 +100,11 @@ fun generateRuleSet(ruleSetString: List<String>, ruleSet: MutableList<RuleSet>) 
 }
 
 fun SingBoxOptions.Rule_DefaultOptions.makeSingBoxRule(list: List<String>, isIP: Boolean) {
+    // Domain and IP selectors are added separately to the same rule.
+    rule_set = rule_set?.toMutableList() ?: mutableListOf()
     if (isIP) {
         ip_cidr = mutableListOf<String>()
-        rule_set = mutableListOf<String>()
     } else {
-        rule_set = mutableListOf<String>()
         domain = mutableListOf<String>()
         domain_suffix = mutableListOf<String>()
         domain_regex = mutableListOf<String>()
@@ -127,7 +130,7 @@ fun SingBoxOptions.Rule_DefaultOptions.makeSingBoxRule(list: List<String>, isIP:
         } else if (it.startsWith("domain:")) {
             domain_suffix.plusAssign(it.removePrefix("domain:").lowercase())
         } else if (it.startsWith("regexp:")) {
-            domain_regex.plusAssign(it.removePrefix("regexp:").lowercase())
+            domain_regex.plusAssign(it.removePrefix("regexp:"))
         } else if (it.startsWith("keyword:")) {
             domain_keyword.plusAssign(it.removePrefix("keyword:").lowercase())
         } else {
@@ -141,6 +144,7 @@ fun SingBoxOptions.Rule_DefaultOptions.makeSingBoxRule(list: List<String>, isIP:
     domain_regex?.removeIf { it.isNullOrBlank() }
     domain_keyword?.removeIf { it.isNullOrBlank() }
     if (ip_cidr?.isEmpty() == true) ip_cidr = null
+    rule_set = rule_set?.distinct()?.takeIf { it.isNotEmpty() }
     if (domain?.isEmpty() == true) domain = null
     if (domain_suffix?.isEmpty() == true) domain_suffix = null
     if (domain_regex?.isEmpty() == true) domain_regex = null
@@ -159,6 +163,18 @@ fun SingBoxOptions.Rule_DefaultOptions.checkEmpty(): Boolean {
     if (port?.isNotEmpty() == true) return false
     if (port_range?.isNotEmpty() == true) return false
     if (source_ip_cidr?.isNotEmpty() == true) return false
+    if (source_port?.isNotEmpty() == true) return false
+    if (source_port_range?.isNotEmpty() == true) return false
+    if (network?.isNotEmpty() == true) return false
+    if (protocol?.isNotEmpty() == true) return false
+    if (ip_is_private == true || source_ip_is_private == true) return false
+    if (inbound?.isNotEmpty() == true) return false
+    if (auth_user?.isNotEmpty() == true) return false
+    if (process_name?.isNotEmpty() == true) return false
+    if (process_path?.isNotEmpty() == true) return false
+    if (package_name?.isNotEmpty() == true) return false
+    if (user?.isNotEmpty() == true) return false
+    if (ip_version != null || !clash_mode.isNullOrBlank()) return false
     //
     if (!_hack_custom_config.isNullOrBlank()) return false
     return true

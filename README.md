@@ -111,6 +111,19 @@ XMR
 
 </details>
 
+## Routing and DNS
+
+User rules retain their configured order. DNS routing derives rules only from
+domain, app and source-address conditions. Rules containing destination IP,
+port, transport, sniffed protocol or custom JSON conditions stay in traffic
+routing: those conditions cannot be safely inferred from a DNS query.
+
+For example, `geosite:cn` can select direct DNS, while `geoip:cn` still selects
+the bypass outbound without becoming an unconditional direct-DNS rule. The
+built-in UDP/443 block rule likewise does not block unrelated DNS queries.
+Proxy endpoint and ECH bootstrap DNS rules remain narrowly scoped to their
+names. FakeDNS is limited to A/AAAA queries.
+
 ## Credits
 
 Core:
