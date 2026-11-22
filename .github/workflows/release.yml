@@ -3,10 +3,10 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Release Tag"
+        description: "Existing release tag for the selected branch (e.g. v1.4.3)"
         required: true
       publish:
-        description: "Publish: If want ignore"
+        description: "Set y to skip publishing the GitHub Release"
         required: false
       play:
         description: "Play: If want ignore"
@@ -107,34 +107,75 @@ jobs:
           export LOCAL_PROPERTIES="${{ secrets.LOCAL_PROPERTIES }}"
           ./run init action gradle
           ./gradlew --stacktrace app:testOssReleaseUnitTest app:assembleOssRelease
-          APK=$(find app/build/outputs/apk -name '*arm64-v8a*.apk')
-          APK=$(dirname $APK)
-          echo "APK=$APK" >> $GITHUB_ENV
+      - name: Verify OSS APK names
+        run: |
+          version=$(sed -n 's/^VERSION_NAME=//p' nb4a.properties)
+          dir=app/build/outputs/apk/oss/release
+          shopt -s nullglob
+          apks=("$dir"/*.apk)
+          if [[ ${#apks[@]} -ne 4 ]]; then
+            echo "::error::Expected four ABI APKs in $dir"
+            exit 1
+          fi
+          for abi in arm64-v8a armeabi-v7a x86 x86_64; do
+            apk="$dir/SekaiMod-$version-$abi"
+            if [[ ! -s "$apk.apk" && ! -s "$apk-unsigned.apk" ]]; then
+              echo "::error::Missing SekaiMod APK for $abi"
+              exit 1
+            fi
+          done
       - uses: actions/upload-artifact@v5
         with:
           name: APKs
-          path: ${{ env.APK }}
+          path: app/build/outputs/apk/oss/release/
+          if-no-files-found: error
   publish:
     name: Publish Release
     if: github.event.inputs.publish != 'y'
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-      - name: Donwload Artifacts
+      - name: Download Artifacts
         uses: actions/download-artifact@v5
         with:
           name: APKs
           path: artifacts
       - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.tag }}
         run: |
-          wget -O ghr.tar.gz https://github.com/tcnksm/ghr/releases/download/v0.13.0/ghr_v0.13.0_linux_amd64.tar.gz
-          tar -xvf ghr.tar.gz
-          mv ghr*linux_amd64/ghr .
-          mkdir apks
-          find artifacts -name "*.apk" -exec cp {} apks \;
-          ./ghr -delete -t "${{ github.token }}" -n "${{ github.event.inputs.tag }}" "${{ github.event.inputs.tag }}" apks
+          if [[ "$GITHUB_REF_TYPE" != branch ]]; then
+            echo "::error::Select the source branch (not a tag) for Release Build"
+            exit 1
+          fi
+          version=$(sed -n 's/^VERSION_NAME=//p' nb4a.properties)
+          if [[ "$RELEASE_TAG" != "v$version" ]]; then
+            echo "::error::Use the existing v$version tag for this build"
+            exit 1
+          fi
+          git fetch --no-tags --depth=1 origin "refs/tags/$RELEASE_TAG"
+          if [[ "$(git rev-parse 'FETCH_HEAD^{commit}')" != "$GITHUB_SHA" ]]; then
+            echo "::error::Tag $RELEASE_TAG must point at the commit used for this build"
+            exit 1
+          fi
+
+          apks=()
+          for abi in arm64-v8a armeabi-v7a x86 x86_64; do
+            apk="artifacts/SekaiMod-$version-$abi.apk"
+            if [[ ! -s "$apk" ]]; then
+              echo "::error::Missing release APK: $apk (check the release signing configuration)"
+              exit 1
+            fi
+            apks+=("$apk")
+          done
+          gh release create "$RELEASE_TAG" "${apks[@]}" --verify-tag --target "$GITHUB_REF_NAME" \
+            --title "SekaiMod $RELEASE_TAG" --generate-notes
   play:
     name: Build Play Bundle
     if: github.event.inputs.play != 'y'

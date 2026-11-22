@@ -157,6 +157,7 @@ fun Project.setupAppCommon() {
 }
 
 fun Project.setupApp() {
+    val apkBaseName = rootProject.name
     val pkgName = requireMetadata().getProperty("PACKAGE_NAME")
     val verName = requireMetadata().getProperty("VERSION_NAME")
     val verCode = (requireMetadata().getProperty("VERSION_CODE").toInt()) * 5
@@ -213,10 +214,10 @@ fun Project.setupApp() {
                 outputFileName = if (isPreview) {
                     outputFileName.replace(
                         project.name,
-                        "NekoBox-" + requireMetadata().getProperty("PRE_VERSION_NAME")
+                        "$apkBaseName-" + requireMetadata().getProperty("PRE_VERSION_NAME")
                     ).replace("-preview", "")
                 } else {
-                    outputFileName.replace(project.name, "NekoBox-$versionName")
+                    outputFileName.replace(project.name, "$apkBaseName-$versionName")
                         .replace("-release", "")
                         .replace("-oss", "")
                 }
