@@ -48,6 +48,26 @@ Upstream usage documentation: https://matsuridayo.github.io
 Please visit [here](https://matsuridayo.github.io/nb4a-plugin/) to download plugins for full proxy
 supports.
 
+## 普通 XHTTP / Ordinary XHTTP
+
+基础设置和 XMUX 继续使用原有节点界面。其他高级选项在节点菜单的**自定义出站 JSON** 中按 sing-box 格式填写，例如：
+
+```json
+{
+  "transport": {
+    "headers": { "User-Agent": "example-client/1.0" },
+    "x_padding_obfs_mode": true,
+    "x_padding_placement": "header",
+    "x_padding_header": "Auth-Token",
+    "x_padding_method": "tokenish"
+  }
+}
+```
+
+VLESS、VMess、Trojan 和 EWP 的 XHTTP 分享链接可通过 `extra` 携带高级参数（Xray camelCase 或 sing-box snake_case）。导入的参数随节点保存、生成配置及再次分享；订阅更新时认证头等内容随订阅更新，用户自己的覆写最后生效。没有配置的节点继续使用原有默认值。导出含认证头的节点时，分享链接也会包含这些值。
+
+Advanced ordinary-XHTTP options use the existing custom outbound JSON editor. Imported `extra` is profile data, including independent download settings. Manual padding bytes and XMUX keep their existing controls. Advanced fields require a core built with the corresponding XHTTP options.
+
 ## Browser XHTTP
 
 See [the 1.14.x protocol/editor compatibility notes](PROTOCOLS_1.14.md) for

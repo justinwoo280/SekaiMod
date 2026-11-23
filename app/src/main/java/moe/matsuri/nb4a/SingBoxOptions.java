@@ -3,6 +3,7 @@ package moe.matsuri.nb4a;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.gson.ToNumberPolicy;
@@ -4711,7 +4712,28 @@ public class SingBoxOptions {
 
         public String path;
 
-        public Map<String, String> headers;
+        // Each header value can be a string or a list of strings.
+        public JsonObject headers;
+
+        public String uplink_http_method;
+        public Boolean x_padding_obfs_mode;
+        public String x_padding_placement;
+        public String x_padding_method;
+        public String x_padding_key;
+        public String x_padding_header;
+        public String session_placement;
+        public String session_key;
+        public String seq_placement;
+        public String seq_key;
+        public String session_id_table;
+        public String session_id_length;
+        public String uplink_data_placement;
+        public String uplink_data_key;
+        public String uplink_chunk_size;
+        public Integer server_max_header_bytes;
+
+        // Presence matters: false, zero and empty child objects override inheritance.
+        public JsonObject download;
 
         public String x_padding_bytes;
 

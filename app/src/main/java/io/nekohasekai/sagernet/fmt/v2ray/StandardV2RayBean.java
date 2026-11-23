@@ -3,23 +3,16 @@ package io.nekohasekai.sagernet.fmt.v2ray;
 import com.esotericsoftware.kryo.io.ByteBufferInput;
 import com.esotericsoftware.kryo.io.ByteBufferOutput;
 
-import io.nekohasekai.sagernet.fmt.AbstractBean;
+import io.nekohasekai.sagernet.fmt.XHTTPBean;
 import io.nekohasekai.sagernet.fmt.trojan.TrojanBean;
 import moe.matsuri.nb4a.utils.JavaUtil;
 
-public abstract class StandardV2RayBean extends AbstractBean {
+public abstract class StandardV2RayBean extends XHTTPBean {
 
     public String uuid;
     public String encryption; // or VLESS flow
 
     //////// End of VMess & VLESS ////////
-
-    // "V2Ray Transport" tcp/http/ws/quic/grpc/httpupgrade
-    public String type;
-
-    public String host;
-
-    public String path;
 
     // --------------------------------------- tls?
 
@@ -68,20 +61,6 @@ public abstract class StandardV2RayBean extends AbstractBean {
 
     public Integer packetEncoding; // 1:packet 2:xudp
 
-    // --------------------------------------- xhttp
-
-    public Boolean xhttpBrowser;
-    public Boolean xhttpGRPCFraming;
-
-    public String xhttpMode;
-    public String xhttpPaddingBytes;
-    public String xhttpXmuxMaxConcurrency;
-    public String xhttpXmuxMaxConnections;
-    public String xhttpXmuxCMaxReuseTimes;
-    public String xhttpXmuxHMaxRequestTimes;
-    public String xhttpXmuxHMaxReusableSecs;
-    public Integer xhttpXmuxHKeepAlivePeriod;
-
     @Override
     public void initializeDefaultValues() {
         super.initializeDefaultValues();
@@ -126,21 +105,12 @@ public abstract class StandardV2RayBean extends AbstractBean {
         if (muxType == null) muxType = 0;
         if (muxConcurrency == null) muxConcurrency = 1;
 
-        if (xhttpBrowser == null) xhttpBrowser = false;
-        if (xhttpGRPCFraming == null) xhttpGRPCFraming = false;
-        if (JavaUtil.isNullOrBlank(xhttpMode)) xhttpMode = "auto";
-        if (xhttpPaddingBytes == null) xhttpPaddingBytes = "";
-        if (xhttpXmuxMaxConcurrency == null) xhttpXmuxMaxConcurrency = "";
-        if (xhttpXmuxMaxConnections == null) xhttpXmuxMaxConnections = "";
-        if (xhttpXmuxCMaxReuseTimes == null) xhttpXmuxCMaxReuseTimes = "";
-        if (xhttpXmuxHMaxRequestTimes == null) xhttpXmuxHMaxRequestTimes = "";
-        if (xhttpXmuxHMaxReusableSecs == null) xhttpXmuxHMaxReusableSecs = "";
-        if (xhttpXmuxHKeepAlivePeriod == null) xhttpXmuxHKeepAlivePeriod = 0;
     }
 
     @Override
     public void serialize(ByteBufferOutput output) {
-        output.writeInt(8);
+        boolean withExtra = hasXHTTPExtra();
+        output.writeInt(withExtra ? 9 : 8);
         super.serialize(output);
         output.writeString(uuid);
         output.writeString(encryption);
@@ -209,6 +179,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
         output.writeInt(muxType);
         output.writeInt(muxConcurrency);
         output.writeBoolean(Boolean.TRUE.equals(xhttpGRPCFraming));
+        if (withExtra) output.writeString(xhttpExtra);
     }
 
     @Override
@@ -322,6 +293,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
             muxConcurrency = input.readInt();
         }
         xhttpGRPCFraming = version >= 8 && input.readBoolean();
+        xhttpExtra = version >= 9 ? input.readString() : "";
     }
 
     public boolean isVLESS() {

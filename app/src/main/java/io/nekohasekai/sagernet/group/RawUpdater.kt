@@ -37,6 +37,18 @@ import org.yaml.snakeyaml.error.YAMLException
 import java.io.StringReader
 import androidx.core.net.toUri
 
+// Imported transport data belongs to the new subscription revision. Only
+// persistent user overrides and the existing Browser choice follow the node.
+internal fun AbstractBean.retainSubscriptionOverrides(previous: AbstractBean) {
+    customOutboundJson = previous.customOutboundJson
+    customConfigJson = previous.customConfigJson
+    if (this is StandardV2RayBean && previous is StandardV2RayBean) {
+        xhttpBrowser = previous.xhttpBrowser
+    } else if (this is EwpBean && previous is EwpBean) {
+        xhttpBrowser = previous.xhttpBrowser
+    }
+}
+
 @Suppress("EXPERIMENTAL_API_USAGE")
 object RawUpdater : GroupUpdater() {
 
@@ -169,14 +181,7 @@ object RawUpdater : GroupUpdater() {
             if (toReplace.contains(name)) {
                 val entity = toReplace[name]!!
                 val existsBean = entity.requireBean()
-                // 更新订阅，保留自定义覆写设置
-                bean.customOutboundJson = existsBean.customOutboundJson
-                bean.customConfigJson = existsBean.customConfigJson
-                if (existsBean is StandardV2RayBean && bean is StandardV2RayBean) {
-                    bean.xhttpBrowser = existsBean.xhttpBrowser
-                } else if (existsBean is EwpBean && bean is EwpBean) {
-                    bean.xhttpBrowser = existsBean.xhttpBrowser
-                }
+                bean.retainSubscriptionOverrides(existsBean)
                 when {
                     existsBean != bean -> {
                         changed++

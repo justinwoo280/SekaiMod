@@ -7,8 +7,8 @@ import com.esotericsoftware.kryo.io.ByteBufferOutput;
 
 import org.jetbrains.annotations.NotNull;
 
-import io.nekohasekai.sagernet.fmt.AbstractBean;
 import io.nekohasekai.sagernet.fmt.KryoConverters;
+import io.nekohasekai.sagernet.fmt.XHTTPBean;
 
 /**
  * EWP (Encrypted Wire Protocol) outbound bean.
@@ -19,7 +19,7 @@ import io.nekohasekai.sagernet.fmt.KryoConverters;
  * Field naming follows StandardV2RayBean conventions so that future code
  * sharing (e.g. ECH/uTLS sub-options) stays simple.
  */
-public class EwpBean extends AbstractBean {
+public class EwpBean extends XHTTPBean {
 
     public static final Creator<EwpBean> CREATOR = new CREATOR<EwpBean>() {
         @NonNull
@@ -68,25 +68,6 @@ public class EwpBean extends AbstractBean {
      */
     public Boolean earlyServerFinished;
 
-    // --------------------------------------- v2ray transport
-    // tcp / ws / http / grpc / httpupgrade / quic
-    public String type;
-    public String host;
-    public String path;
-
-    // --------------------------------------- xhttp
-    public Boolean xhttpBrowser;
-    public Boolean xhttpGRPCFraming;
-
-    public String xhttpMode;
-    public String xhttpPaddingBytes;
-    public String xhttpXmuxMaxConcurrency;
-    public String xhttpXmuxMaxConnections;
-    public String xhttpXmuxCMaxReuseTimes;
-    public String xhttpXmuxHMaxRequestTimes;
-    public String xhttpXmuxHMaxReusableSecs;
-    public Integer xhttpXmuxHKeepAlivePeriod;
-
     // --------------------------------------- TLS
     public String sni;
     public String alpn;
@@ -129,17 +110,6 @@ public class EwpBean extends AbstractBean {
         if (host == null) host = "";
         if (path == null) path = "";
 
-        if (xhttpBrowser == null) xhttpBrowser = false;
-        if (xhttpGRPCFraming == null) xhttpGRPCFraming = false;
-        if (xhttpMode == null || xhttpMode.isEmpty()) xhttpMode = "auto";
-        if (xhttpPaddingBytes == null) xhttpPaddingBytes = "";
-        if (xhttpXmuxMaxConcurrency == null) xhttpXmuxMaxConcurrency = "";
-        if (xhttpXmuxMaxConnections == null) xhttpXmuxMaxConnections = "";
-        if (xhttpXmuxCMaxReuseTimes == null) xhttpXmuxCMaxReuseTimes = "";
-        if (xhttpXmuxHMaxRequestTimes == null) xhttpXmuxHMaxRequestTimes = "";
-        if (xhttpXmuxHMaxReusableSecs == null) xhttpXmuxHMaxReusableSecs = "";
-        if (xhttpXmuxHKeepAlivePeriod == null) xhttpXmuxHKeepAlivePeriod = 0;
-
         if (sni == null) sni = "";
         if (alpn == null) alpn = "";
         if (certificates == null) certificates = "";
@@ -175,7 +145,9 @@ public class EwpBean extends AbstractBean {
         // v4: + Browser XHTTP transport switch
         // v5: + optional gRPC framing
         // v6: + EWP/v2.3.1 early server Finished opt-in
-        output.writeInt(6);
+        // v7: + imported XHTTP extra (no layout change for other profiles)
+        boolean withExtra = hasXHTTPExtra();
+        output.writeInt(withExtra ? 7 : 6);
         super.serialize(output);
 
         output.writeString(uuid);
@@ -221,6 +193,7 @@ public class EwpBean extends AbstractBean {
         output.writeInt(packetEncoding);
         output.writeBoolean(Boolean.TRUE.equals(xhttpGRPCFraming));
         output.writeBoolean(Boolean.TRUE.equals(earlyServerFinished));
+        if (withExtra) output.writeString(xhttpExtra);
     }
 
     @Override
@@ -299,6 +272,7 @@ public class EwpBean extends AbstractBean {
         packetEncoding = input.readInt();
         xhttpGRPCFraming = version >= 5 && input.readBoolean();
         earlyServerFinished = version >= 6 && input.readBoolean();
+        xhttpExtra = version >= 7 ? input.readString() : "";
     }
 
     @NotNull

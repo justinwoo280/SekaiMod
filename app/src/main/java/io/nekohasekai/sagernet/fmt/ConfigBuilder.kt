@@ -102,7 +102,7 @@ internal fun sanitizeBrowserXHTTPOutboundJson(json: String): String {
         remove("type")
         remove("mode")
         remove("grpc_framing")
-        remove("xmux")
+        keys.removeAll(XHTTPExtra.ordinaryOnlyFields)
     }
     child("tls")?.apply {
         listOf(

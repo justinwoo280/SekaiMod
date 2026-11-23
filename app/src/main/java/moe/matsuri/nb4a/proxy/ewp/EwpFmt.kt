@@ -1,7 +1,10 @@
 package moe.matsuri.nb4a.proxy.ewp
 
 import io.nekohasekai.sagernet.database.DataStore
+import io.nekohasekai.sagernet.fmt.buildXHTTPTransport
+import io.nekohasekai.sagernet.fmt.readXHTTPQuery
 import io.nekohasekai.sagernet.fmt.resolveXHTTPMode
+import io.nekohasekai.sagernet.fmt.shareXHTTPExtra
 import io.nekohasekai.sagernet.ktx.linkBuilder
 import io.nekohasekai.sagernet.ktx.toLink
 import io.nekohasekai.sagernet.ktx.urlSafe
@@ -17,8 +20,6 @@ import moe.matsuri.nb4a.SingBoxOptions.V2RayTransportOptions_GRPCOptions
 import moe.matsuri.nb4a.SingBoxOptions.V2RayTransportOptions_HTTPOptions
 import moe.matsuri.nb4a.SingBoxOptions.V2RayTransportOptions_HTTPUpgradeOptions
 import moe.matsuri.nb4a.SingBoxOptions.V2RayTransportOptions_WebsocketOptions
-import moe.matsuri.nb4a.SingBoxOptions.V2RayTransportOptions_XHTTPOptions
-import moe.matsuri.nb4a.SingBoxOptions.V2RayXHTTPXmuxOptions
 import moe.matsuri.nb4a.utils.listByLineOrComma
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
@@ -137,35 +138,7 @@ private fun buildEwpTransport(bean: EwpBean): V2RayTransportOptions? {
             type = "quic"
         }
 
-        "xhttp" -> V2RayTransportOptions_XHTTPOptions().apply {
-            val browser = bean.xhttpBrowser == true
-            type = "xhttp"
-            this.browser = browser
-            mode = resolveXHTTPMode(bean.xhttpMode, browser, bean.xhttpGRPCFraming == true)
-            if (bean.xhttpGRPCFraming == true) grpc_framing = true
-            if (bean.host.isNotBlank()) host = bean.host
-            if (bean.path.isNotBlank()) path = bean.path
-            if (bean.xhttpPaddingBytes.isNotBlank()) x_padding_bytes = bean.xhttpPaddingBytes
-
-            val hasXmux = !browser && (bean.xhttpXmuxMaxConcurrency.isNotBlank() ||
-                bean.xhttpXmuxMaxConnections.isNotBlank() ||
-                bean.xhttpXmuxCMaxReuseTimes.isNotBlank() ||
-                bean.xhttpXmuxHMaxRequestTimes.isNotBlank() ||
-                bean.xhttpXmuxHMaxReusableSecs.isNotBlank() ||
-                (bean.xhttpXmuxHKeepAlivePeriod != null && bean.xhttpXmuxHKeepAlivePeriod > 0))
-            if (hasXmux) {
-                xmux = V2RayXHTTPXmuxOptions().apply {
-                    if (bean.xhttpXmuxMaxConcurrency.isNotBlank()) max_concurrency = bean.xhttpXmuxMaxConcurrency
-                    if (bean.xhttpXmuxMaxConnections.isNotBlank()) max_connections = bean.xhttpXmuxMaxConnections
-                    if (bean.xhttpXmuxCMaxReuseTimes.isNotBlank()) c_max_reuse_times = bean.xhttpXmuxCMaxReuseTimes
-                    if (bean.xhttpXmuxHMaxRequestTimes.isNotBlank()) h_max_request_times = bean.xhttpXmuxHMaxRequestTimes
-                    if (bean.xhttpXmuxHMaxReusableSecs.isNotBlank()) h_max_reusable_secs = bean.xhttpXmuxHMaxReusableSecs
-                    if (bean.xhttpXmuxHKeepAlivePeriod != null && bean.xhttpXmuxHKeepAlivePeriod > 0) {
-                        h_keep_alive_period = bean.xhttpXmuxHKeepAlivePeriod.toLong()
-                    }
-                }
-            }
-        }
+        "xhttp" -> bean.buildXHTTPTransport(bean.xhttpBrowser == true)
 
         else -> null
     }
@@ -208,6 +181,7 @@ fun EwpBean.toUri(): String {
         val mode = resolveXHTTPMode(xhttpMode, browserXhttp, xhttpGRPCFraming == true)
         if (mode.isNotBlank() && mode != "auto") builder.addQueryParameter("mode", mode)
         if (xhttpGRPCFraming == true) builder.addQueryParameter("grpc_framing", "1")
+        shareXHTTPExtra()?.let { builder.addQueryParameter("extra", it.toString()) }
     }
 
     if (browserXhttp) {
@@ -241,7 +215,7 @@ fun EwpBean.toUri(): String {
 
 fun parseEwp(url: String): EwpBean {
     val link = url.replace("ewp://", "https://").toHttpUrlOrNull()
-        ?: error("invalid ewp link $url")
+        ?: error("invalid ewp link")
     return EwpBean().apply {
         serverAddress = link.host
         serverPort = link.port
@@ -259,19 +233,11 @@ fun parseEwp(url: String): EwpBean {
             earlyServerFinished = it == "1" || it == "true"
         }
 
-        type = link.queryParameter("type") ?: "tcp"
+        type = (link.queryParameter("type") ?: "tcp").let { if (it == "splithttp") "xhttp" else it }
         host = link.queryParameter("host") ?: ""
         path = link.queryParameter("path") ?: ""
 
-        if (type == "xhttp") {
-            xhttpMode = link.queryParameter("mode") ?: "auto"
-            link.queryParameter("browser")?.also {
-                xhttpBrowser = it == "1" || it == "true"
-            }
-            link.queryParameter("grpc_framing")?.also {
-                xhttpGRPCFraming = it == "1" || it == "true"
-            }
-        }
+        if (type == "xhttp") readXHTTPQuery(link)
 
         sni = link.queryParameter("sni") ?: ""
         alpn = link.queryParameter("alpn") ?: ""

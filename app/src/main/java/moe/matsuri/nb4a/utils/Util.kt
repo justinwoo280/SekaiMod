@@ -156,6 +156,20 @@ object Util {
         if (j.isBlank()) return
         val src = JavaUtil.gson.fromJson(j, dst.javaClass)
         mergeMap(dst, src)
+        // Generic recursive merging treats {} as a no-op. XHTTP uses explicit
+        // empty objects to reset inherited headers, TLS and connection pools.
+        @Suppress("UNCHECKED_CAST")
+        val transport = dst["transport"] as? MutableMap<String, Any?> ?: return
+        if (transport["type"] != "xhttp") return
+        val custom = src["transport"] as? Map<*, *> ?: return
+        fun clearEmpty(target: MutableMap<String, Any?>, source: Map<*, *>, vararg keys: String) {
+            for (key in keys) if ((source[key] as? Map<*, *>)?.isEmpty() == true) target[key] = emptyMap<String, Any?>()
+        }
+        clearEmpty(transport, custom, "headers", "xmux", "download")
+        val customDownload = custom["download"] as? Map<*, *> ?: return
+        @Suppress("UNCHECKED_CAST")
+        val download = transport["download"] as? MutableMap<String, Any?> ?: return
+        clearEmpty(download, customDownload, "headers", "xmux", "tls")
     }
 
     // Format Time

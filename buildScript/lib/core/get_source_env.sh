@@ -30,9 +30,9 @@
 #     refragmentation, and async TCP/UDP handoff fixes (gRPC/xhttp).
 #     Config: outbound takes uuid + server_public_key + server_id
 #     (+ route_epoch); inbound takes users + signing_private_key + server_id.
-#   - xhttp: transport delegated to the standalone sing-xhttp v0.1.7 library
-#     (full Xray splithttp parity, REALITY/HTTP3/uTLS, per-mode defaults);
-#     in-tree transport/v2rayxhttp is now a thin bridge. v0.1.7 rejects
+#   - Ordinary XHTTP uses the sing-xhttp revision pinned in libcore/go.mod.
+#     The bridge supports custom headers, padding and session placement, plus
+#     independent download endpoints, TLS and XMUX settings. It rejects
 #     `alpn: ["h3"]` combined with uTLS or REALITY instead of silently falling
 #     back to HTTP/2 over TCP: quic-go runs the TLS 1.3 handshake through
 #     crypto/tls and exposes no hook for a caller-supplied ClientHello, so
@@ -49,5 +49,5 @@
 #     platform.Interface) re-applied; oomprofile parses /proc/self/maps
 #     locally instead of linkname'ing runtime/pprof internals (Go 1.26
 #     rejects pull-mode linkname); CI follows the fork's 1.13.x workflows.
-export COMMIT_SING_BOX="5f05be4ee3296e8f3575e7e0fd59378198d8ee6a"
+export COMMIT_SING_BOX="001ad9eeb43f873909f2803c84d6372b62a3c37f"
 export COMMIT_LIBNEKO="1c47a3af71990a7b2192e03292b4d246c308ef0b"

@@ -117,7 +117,7 @@ suspend fun parseProxies(text: String): List<AbstractBean> {
         }
 
         if (startsWith("sn://")) {
-            Logs.d("Try parse universal link: $this")
+            Logs.d("Try parse universal link")
             runCatching {
                 entities.add(parseUniversal(this))
             }.onFailure {
@@ -149,21 +149,21 @@ suspend fun parseProxies(text: String): List<AbstractBean> {
                 throw (SubscriptionFoundException(clashUrl))
             }
         } else if (startsWith("vmess://")) {
-            Logs.d("Try parse v2ray link: $this")
+            Logs.d("Try parse v2ray link")
             runCatching {
                 entities.add(parseV2Ray(this))
             }.onFailure {
                 Logs.w(it)
             }
         } else if (startsWith("vless://")) {
-            Logs.d("Try parse vless link: $this")
+            Logs.d("Try parse vless link")
             runCatching {
                 entities.add(parseV2Ray(this))
             }.onFailure {
                 Logs.w(it)
             }
         } else if (startsWith("trojan://")) {
-            Logs.d("Try parse trojan link: $this")
+            Logs.d("Try parse trojan link")
             runCatching {
                 entities.add(parseTrojan(this))
             }.onFailure {
@@ -219,7 +219,7 @@ suspend fun parseProxies(text: String): List<AbstractBean> {
                 Logs.w(it)
             }
         } else if (startsWith("ewp://")) {
-            Logs.d("Try parse ewp link: $this")
+            Logs.d("Try parse ewp link")
             runCatching {
                 entities.add(parseEwp(this))
             }.onFailure {

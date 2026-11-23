@@ -1,9 +1,14 @@
 package io.nekohasekai.sagernet.fmt.v2ray
 
-import android.text.TextUtils
 import com.google.gson.Gson
+import com.google.gson.JsonElement
+import io.nekohasekai.sagernet.fmt.XHTTPExtra
+import io.nekohasekai.sagernet.fmt.buildXHTTPTransport
+import io.nekohasekai.sagernet.fmt.importXHTTPExtra
+import io.nekohasekai.sagernet.fmt.readXHTTPQuery
 import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.fmt.resolveXHTTPMode
+import io.nekohasekai.sagernet.fmt.shareXHTTPExtra
 import io.nekohasekai.sagernet.fmt.http.HttpBean
 import io.nekohasekai.sagernet.fmt.trojan.TrojanBean
 import io.nekohasekai.sagernet.ktx.*
@@ -12,6 +17,8 @@ import moe.matsuri.nb4a.utils.NGUtil
 import moe.matsuri.nb4a.utils.listByLineOrComma
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okio.ByteString.Companion.decodeBase64
+import okio.ByteString.Companion.encodeUtf8
 import org.json.JSONObject
 
 data class VmessQRCode(
@@ -30,6 +37,9 @@ data class VmessQRCode(
     var sni: String = "",
     var alpn: String = "",
     var fp: String = "",
+    var mode: String? = null,
+    var grpc_framing: Boolean? = null,
+    var extra: JsonElement? = null,
 )
 
 fun StandardV2RayBean.isTLS(): Boolean {
@@ -43,18 +53,22 @@ fun StandardV2RayBean.setTLS(boolean: Boolean) {
 fun parseV2Ray(link: String): StandardV2RayBean {
     // Try parse stupid formats first
 
-    if (!link.contains("?")) {
+    if (link.startsWith("vmess://") && !link.contains("?")) {
         try {
             return parseV2RayN(link)
+        } catch (e: XHTTPExtra.Invalid) {
+            throw e
         } catch (e: Exception) {
             Logs.i("try v2rayN: " + e.readableMessage)
         }
     }
 
-    try {
-        return tryResolveVmess4Kitsunebi(link)
-    } catch (e: Exception) {
-        Logs.i("try Kitsunebi: " + e.readableMessage)
+    if (link.startsWith("vmess://") && !link.substringBefore('?').contains('@')) {
+        try {
+            return tryResolveVmess4Kitsunebi(link)
+        } catch (e: Exception) {
+            Logs.i("try Kitsunebi: " + e.readableMessage)
+        }
     }
 
     // "std" format
@@ -85,6 +99,10 @@ fun parseV2Ray(link: String): StandardV2RayBean {
         }
 
         when (protocol) {
+            "xhttp", "splithttp" -> {
+                bean.type = "xhttp"
+                bean.readXHTTPQuery(url)
+            }
 //            "tcp" -> {
 //                url.queryParameter("type")?.let { type ->
 //                    if (type == "http") {
@@ -153,7 +171,7 @@ fun StandardV2RayBean.parseDuckSoft(url: HttpUrl) {
         path = url.pathSegments.joinToString("/")
     }
 
-    type = url.queryParameter("type") ?: "tcp"
+    type = (url.queryParameter("type") ?: "tcp").let { if (it == "splithttp") "xhttp" else it }
     if (type == "h2" || url.queryParameter("headerType") == "http") type = "http"
 
     security = url.queryParameter("security")
@@ -238,17 +256,7 @@ fun StandardV2RayBean.parseDuckSoft(url: HttpUrl) {
             }
         }
 
-        "xhttp" -> {
-            url.queryParameter("host")?.let { host = it }
-            url.queryParameter("path")?.let { path = it }
-            url.queryParameter("mode")?.let { xhttpMode = it }
-            url.queryParameter("browser")?.let {
-                xhttpBrowser = it == "1" || it == "true"
-            }
-            url.queryParameter("grpc_framing")?.let {
-                xhttpGRPCFraming = it == "1" || it == "true"
-            }
-        }
+        "xhttp" -> readXHTTPQuery(url)
     }
 
     // maybe from matsuri vmess exoprt
@@ -330,7 +338,7 @@ private fun tryResolveVmess4Kitsunebi(server: String): VMessBean {
 // SagerNet's
 // Do not support some format and then throw exception
 fun parseV2RayN(link: String): VMessBean {
-    val result = link.substringAfter("vmess://").decodeBase64UrlSafe()
+    val result = link.substringAfter("vmess://").decodeBase64()?.utf8() ?: error("invalid VMess base64")
     if (result.contains("= vmess")) {
         return parseCsvVMess(result)
     }
@@ -338,10 +346,10 @@ fun parseV2RayN(link: String): VMessBean {
     val vmessQRCode = Gson().fromJson(result, VmessQRCode::class.java)
 
     // Although VmessQRCode fields are non null, looks like Gson may still create null fields
-    if (TextUtils.isEmpty(vmessQRCode.add)
-        || TextUtils.isEmpty(vmessQRCode.port)
-        || TextUtils.isEmpty(vmessQRCode.id)
-        || TextUtils.isEmpty(vmessQRCode.net)
+    if (vmessQRCode.add.isNullOrEmpty()
+        || vmessQRCode.port.isNullOrEmpty()
+        || vmessQRCode.id.isNullOrEmpty()
+        || vmessQRCode.net.isNullOrEmpty()
     ) {
         throw Exception("invalid VmessQRCode")
     }
@@ -352,7 +360,18 @@ fun parseV2RayN(link: String): VMessBean {
     bean.encryption = vmessQRCode.scy
     bean.uuid = vmessQRCode.id
     bean.alterId = vmessQRCode.aid.toIntOrNull()
-    bean.type = vmessQRCode.net
+    bean.type = if (vmessQRCode.net == "splithttp") "xhttp" else vmessQRCode.net
+    if (bean.type == "xhttp") {
+        vmessQRCode.extra?.takeUnless { it.isJsonNull }?.let {
+            bean.importXHTTPExtra(when {
+                it.isJsonObject -> it.asJsonObject
+                it.isJsonPrimitive && it.asJsonPrimitive.isString -> XHTTPExtra.parse(it.asString)
+                else -> throw XHTTPExtra.Invalid("extra", "expected a JSON object")
+            })
+        }
+        vmessQRCode.mode?.let { bean.xhttpMode = it }
+        vmessQRCode.grpc_framing?.let { bean.xhttpGRPCFraming = it }
+    }
     bean.host = vmessQRCode.host
     bean.path = vmessQRCode.path
     val headerType = vmessQRCode.type
@@ -426,6 +445,11 @@ fun VMessBean.toV2rayN(): String {
         path = bean.path
 
         when (net) {
+            "xhttp" -> {
+                mode = bean.xhttpMode?.takeIf { it.isNotBlank() && it != "auto" }
+                grpc_framing = true.takeIf { bean.xhttpGRPCFraming == true }
+                extra = bean.shareXHTTPExtra()
+            }
             "http" -> {
                 if (!isTLS()) {
                     type = "http"
@@ -446,7 +470,7 @@ fun VMessBean.toV2rayN(): String {
         alpn = bean.alpn.replace("\n", ",")
         fp = bean.utlsFingerprint
     }.let {
-        NGUtil.encode(Gson().toJson(it))
+        Gson().toJson(it).encodeUtf8().base64()
     }
 }
 
@@ -508,6 +532,7 @@ fun StandardV2RayBean.toUriVMessVLESSTrojan(isTrojan: Boolean): String {
                 builder.addQueryParameter("browser", "1")
             }
             if (xhttpGRPCFraming == true) builder.addQueryParameter("grpc_framing", "1")
+            shareXHTTPExtra()?.let { builder.addQueryParameter("extra", it.toString()) }
         }
     }
 
@@ -629,37 +654,7 @@ fun buildSingBoxOutboundStreamSettings(bean: StandardV2RayBean): V2RayTransportO
             }
         }
 
-        "xhttp" -> {
-            val browser = bean.isVLESS && bean.xhttpBrowser == true
-            return V2RayTransportOptions_XHTTPOptions().apply {
-                type = "xhttp"
-                this.browser = browser
-                mode = resolveXHTTPMode(bean.xhttpMode, browser, bean.xhttpGRPCFraming == true)
-                if (bean.xhttpGRPCFraming == true) grpc_framing = true
-                if (bean.host.isNotBlank()) host = bean.host
-                if (bean.path.isNotBlank()) path = bean.path
-                if (bean.xhttpPaddingBytes.isNotBlank()) x_padding_bytes = bean.xhttpPaddingBytes
-
-                val hasXmux = !browser && (bean.xhttpXmuxMaxConcurrency.isNotBlank() ||
-                    bean.xhttpXmuxMaxConnections.isNotBlank() ||
-                    bean.xhttpXmuxCMaxReuseTimes.isNotBlank() ||
-                    bean.xhttpXmuxHMaxRequestTimes.isNotBlank() ||
-                    bean.xhttpXmuxHMaxReusableSecs.isNotBlank() ||
-                    (bean.xhttpXmuxHKeepAlivePeriod != null && bean.xhttpXmuxHKeepAlivePeriod > 0))
-                if (hasXmux) {
-                    xmux = V2RayXHTTPXmuxOptions().apply {
-                        if (bean.xhttpXmuxMaxConcurrency.isNotBlank()) max_concurrency = bean.xhttpXmuxMaxConcurrency
-                        if (bean.xhttpXmuxMaxConnections.isNotBlank()) max_connections = bean.xhttpXmuxMaxConnections
-                        if (bean.xhttpXmuxCMaxReuseTimes.isNotBlank()) c_max_reuse_times = bean.xhttpXmuxCMaxReuseTimes
-                        if (bean.xhttpXmuxHMaxRequestTimes.isNotBlank()) h_max_request_times = bean.xhttpXmuxHMaxRequestTimes
-                        if (bean.xhttpXmuxHMaxReusableSecs.isNotBlank()) h_max_reusable_secs = bean.xhttpXmuxHMaxReusableSecs
-                        if (bean.xhttpXmuxHKeepAlivePeriod != null && bean.xhttpXmuxHKeepAlivePeriod > 0) {
-                            h_keep_alive_period = bean.xhttpXmuxHKeepAlivePeriod.toLong()
-                        }
-                    }
-                }
-            }
-        }
+        "xhttp" -> return bean.buildXHTTPTransport(bean.isVLESS && bean.xhttpBrowser == true)
     }
 
     return null
