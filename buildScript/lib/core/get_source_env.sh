@@ -7,6 +7,9 @@
 #     pinned together with the sing-tun integration in libcore/go.mod.
 #   - Cronet Chromium 154.0.8037.49, Chrome Root Store v45 and root-derived
 #     Trust Anchor IDs; sing-lwip includes the pinned fragment reassembly fixes.
+#   - Cronet wrapper/native c67c5dc12708 and all ffdf7fe53517 include selective
+#     async socket scheduling, Naive resolver/reset, C-header initialization,
+#     BSD UDP EOF and Windows TCP metrics fixes from the maintained native fork.
 #   - Browser XHTTP selects HTTP/3 with tls.alpn=["h3"] and routes UDP through
 #     the outbound; explicit h2/http/1.1 offers are preserved for TCP/TLS.
 #   - Android Strict ECH retains the configured internal DNS backend, fixing
@@ -52,5 +55,5 @@
 #     platform.Interface) re-applied; oomprofile parses /proc/self/maps
 #     locally instead of linkname'ing runtime/pprof internals (Go 1.26
 #     rejects pull-mode linkname); CI follows the fork's 1.13.x workflows.
-export COMMIT_SING_BOX="6a5f19f62293fed978435c418f3b526a6a9feba9"
+export COMMIT_SING_BOX="287d5e85e8bebe3d986606c4ee98cf924f4293d3"
 export COMMIT_LIBNEKO="1c47a3af71990a7b2192e03292b4d246c308ef0b"
