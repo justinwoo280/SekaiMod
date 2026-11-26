@@ -18,6 +18,7 @@ import (
 	boxCertificate "github.com/sagernet/sing-box/adapter/certificate"
 	"github.com/sagernet/sing-box/boxapi"
 	"github.com/sagernet/sing-box/experimental/libbox/platform"
+	boxLog "github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/protocol/group"
 
 	box "github.com/sagernet/sing-box"
@@ -120,6 +121,8 @@ func CheckSingBoxConfig(config string, localTransport LocalDNSTransport) error {
 	// starts. Start DNS transports here to surface them; skip the types
 	// that bind network resources at start.
 	dnsManager := service.FromContext[adapter.DNSTransportManager](ctx)
+	scope := adapter.NewScope(ctx, service.FromContext[boxLog.Factory](ctx).Logger())
+	defer scope.Close()
 	if dnsManager != nil {
 		for _, transport := range dnsManager.Transports() {
 			switch transport.Type() {
@@ -127,9 +130,11 @@ func CheckSingBoxConfig(config string, localTransport LocalDNSTransport) error {
 				continue
 			}
 			if lifecycle, isLifecycle := transport.(adapter.Lifecycle); isLifecycle {
-				if err := lifecycle.Start(adapter.StartStateStart); err != nil {
-					instance.Close()
-					return fmt.Errorf("start dns/%s[%s]: %v", transport.Type(), transport.Tag(), err)
+				for _, stage := range []adapter.StartStage{adapter.StartStateInitialize, adapter.StartStateStart} {
+					if err := scope.Start(fmt.Sprintf("dns/%s[%s]", transport.Type(), transport.Tag()), lifecycle, stage); err != nil {
+						instance.Close()
+						return err
+					}
 				}
 			}
 		}

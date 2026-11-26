@@ -42,7 +42,11 @@ func TestBrowserAndroidSystemStoreConfig(t *testing.T) {
 					if err != nil {
 						t.Fatal(err)
 					}
-					defer store.Close()
+					scope := adapter.NewScope(ctx, logger.NOP())
+					defer scope.Close()
+					if err := scope.Start("certificate", store, adapter.StartStateInitialize); err != nil {
+						t.Fatal(err)
+					}
 					service.MustRegister[adapter.CertificateStore](ctx, store)
 					extra := ""
 					if protocol == "ewp" {

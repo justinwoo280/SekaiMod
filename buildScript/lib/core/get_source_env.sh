@@ -1,4 +1,7 @@
 # sing-box mod 1.14.x line, which carries:
+#   - Upstream stable@8dbc70be (post-v1.14.4 maintenance), with scoped
+#     lifecycle cleanup and resolver-aware ECH for upload/download TLS.
+#   - sing-tun lwip@ff0e245 plus sing/dev@9b11dbe; Go remains the default.
 #   - Go userspace TUN stack as the default, with optional static-CGO lwIP;
 #     system, gVisor and mixed remain selectable. Native dependencies are
 #     pinned together with the sing-tun integration in libcore/go.mod.
@@ -49,5 +52,5 @@
 #     platform.Interface) re-applied; oomprofile parses /proc/self/maps
 #     locally instead of linkname'ing runtime/pprof internals (Go 1.26
 #     rejects pull-mode linkname); CI follows the fork's 1.13.x workflows.
-export COMMIT_SING_BOX="001ad9eeb43f873909f2803c84d6372b62a3c37f"
+export COMMIT_SING_BOX="6a5f19f62293fed978435c418f3b526a6a9feba9"
 export COMMIT_LIBNEKO="1c47a3af71990a7b2192e03292b4d246c308ef0b"

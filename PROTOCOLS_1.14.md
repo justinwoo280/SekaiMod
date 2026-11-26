@@ -4,6 +4,12 @@ The Android editors and generators target the core revision pinned in
 `buildScript/lib/core/get_source_env.sh`. Generic dialer options and advanced
 protocol fields can also be supplied through each profile's custom outbound JSON.
 
+The current core integrates upstream `stable@8dbc70be`, a post-`v1.14.4`
+maintenance snapshot. libcore uses its scoped lifecycle and resolver-aware ECH
+interfaces, together with `sing-tun/lwip@ff0e245` and `sing/dev@9b11dbe`.
+The matched Browser-capable Cronet fork archives remain pinned separately;
+the core's `release/UPSTREAM_1.14.md` records that native compatibility boundary.
+
 ## Snell
 
 Snell is registered in the Android native outbound registry and has its own
