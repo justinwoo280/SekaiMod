@@ -130,6 +130,9 @@ public class SingBoxOptions {
 
     // paste generate output here
 
+    // Current dialer/transport/service durations are nullable, unit-bearing strings.
+    // Object-valued udp_timeout accepts a duration string or legacy integer seconds.
+
     public static class ClashAPIOptions extends SingBoxOption {
 
         public String external_controller;
@@ -163,7 +166,7 @@ public class SingBoxOptions {
 
         public String url;
 
-        public Long interval;
+        public String interval;
 
         public Integer tolerance;
 
@@ -240,7 +243,7 @@ public class SingBoxOptions {
 
         // Generate note: option type:  public Boolean UDPFragmentDefault;
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -286,7 +289,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -298,7 +301,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -432,7 +435,7 @@ public class SingBoxOptions {
 
         // Generate note: option type:  public Boolean UDPFragmentDefault;
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -505,7 +508,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -517,7 +520,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -580,7 +583,7 @@ public class SingBoxOptions {
 
         // Generate note: option type:  public Boolean UDPFragmentDefault;
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -653,7 +656,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -665,7 +668,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -767,7 +770,7 @@ public class SingBoxOptions {
 
         // Generate note: option type:  public Boolean UDPFragmentDefault;
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -836,7 +839,7 @@ public class SingBoxOptions {
 
         public Boolean enabled;
 
-        public Long interval;
+        public String interval;
 
         public Boolean write_to_system;
 
@@ -862,7 +865,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -874,7 +877,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -939,7 +942,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -951,7 +954,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
     }
 
@@ -1022,7 +1025,7 @@ public class SingBoxOptions {
 
         // Generate note: option type:  public Boolean UDPFragmentDefault;
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -1060,7 +1063,7 @@ public class SingBoxOptions {
 
         // Generate note: option type:  public Boolean UDPFragmentDefault;
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -1311,7 +1314,7 @@ public class SingBoxOptions {
 
         // Generate note: option type:  public Boolean UDPFragmentDefault;
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -1384,7 +1387,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -1396,7 +1399,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -1440,7 +1443,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -1452,7 +1455,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -1494,7 +1497,7 @@ public class SingBoxOptions {
 
         // Generate note: option type:  public Boolean UDPFragmentDefault;
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -1561,7 +1564,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -1573,7 +1576,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -1596,7 +1599,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -1608,7 +1611,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -1642,7 +1645,7 @@ public class SingBoxOptions {
 
         // Generate note: option type:  public Boolean UDPFragmentDefault;
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -1682,7 +1685,7 @@ public class SingBoxOptions {
 
         // Generate note: option type:  public Boolean UDPFragmentDefault;
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -1728,7 +1731,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -1740,7 +1743,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -1780,7 +1783,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -1792,7 +1795,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -1832,7 +1835,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -1844,7 +1847,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -1961,7 +1964,7 @@ public class SingBoxOptions {
         // Generate note: Listable
         public List<String> short_id;
 
-        public Long max_time_difference;
+        public String max_time_difference;
 
     }
 
@@ -1989,7 +1992,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -2001,7 +2004,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -2100,7 +2103,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -2112,7 +2115,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -2141,7 +2144,7 @@ public class SingBoxOptions {
 
         // Generate note: option type:  public Boolean UDPFragmentDefault;
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -2199,7 +2202,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -2211,7 +2214,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -2249,7 +2252,7 @@ public class SingBoxOptions {
 
         // Generate note: option type:  public Boolean UDPFragmentDefault;
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -2274,11 +2277,11 @@ public class SingBoxOptions {
 
         public String congestion_control;
 
-        public Long auth_timeout;
+        public String auth_timeout;
 
         public Boolean zero_rtt_handshake;
 
-        public Long heartbeat;
+        public String heartbeat;
 
         public InboundTLSOptions tls;
 
@@ -2311,7 +2314,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -2323,7 +2326,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -2346,7 +2349,7 @@ public class SingBoxOptions {
 
         public Boolean zero_rtt_handshake;
 
-        public Long heartbeat;
+        public String heartbeat;
 
         public String network;
 
@@ -2411,7 +2414,7 @@ public class SingBoxOptions {
 
         public List<String> dns_address;
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         // go (default), gvisor, system, mixed, lwip.
         public String stack;
@@ -2505,9 +2508,9 @@ public class SingBoxOptions {
 
         public Map<String, String> headers;
 
-        public Long idle_timeout;
+        public String idle_timeout;
 
-        public Long ping_timeout;
+        public String ping_timeout;
 
     }
 
@@ -2528,9 +2531,9 @@ public class SingBoxOptions {
 
         public String service_name;
 
-        public Long idle_timeout;
+        public String idle_timeout;
 
-        public Long ping_timeout;
+        public String ping_timeout;
 
         public Boolean permit_without_stream;
 
@@ -2563,7 +2566,7 @@ public class SingBoxOptions {
 
         // Generate note: option type:  public Boolean UDPFragmentDefault;
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -2619,7 +2622,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -2631,7 +2634,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -2673,7 +2676,7 @@ public class SingBoxOptions {
 
         // Generate note: option type:  public Boolean UDPFragmentDefault;
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -2729,7 +2732,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -2741,7 +2744,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -2791,7 +2794,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -2803,7 +2806,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -2912,7 +2915,7 @@ public class SingBoxOptions {
         public String dns_mode;
         public List<String> dns_address;
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         // go (default), gvisor, system, mixed, lwip.
         public String stack;
@@ -2946,7 +2949,7 @@ public class SingBoxOptions {
         public Boolean udp_fragment;
 
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -2983,7 +2986,7 @@ public class SingBoxOptions {
         public Boolean udp_fragment;
 
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -3022,7 +3025,7 @@ public class SingBoxOptions {
         public Boolean udp_fragment;
 
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -3065,7 +3068,7 @@ public class SingBoxOptions {
         public Boolean udp_fragment;
 
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -3104,7 +3107,7 @@ public class SingBoxOptions {
         public Boolean udp_fragment;
 
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -3147,7 +3150,7 @@ public class SingBoxOptions {
         public Boolean udp_fragment;
 
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -3190,7 +3193,7 @@ public class SingBoxOptions {
         public Boolean udp_fragment;
 
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -3237,7 +3240,7 @@ public class SingBoxOptions {
         public Boolean udp_fragment;
 
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -3280,7 +3283,7 @@ public class SingBoxOptions {
         public Boolean udp_fragment;
 
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -3370,7 +3373,7 @@ public class SingBoxOptions {
         public Boolean udp_fragment;
 
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -3429,7 +3432,7 @@ public class SingBoxOptions {
         public Boolean udp_fragment;
 
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -3478,7 +3481,7 @@ public class SingBoxOptions {
         public Boolean udp_fragment;
 
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -3521,7 +3524,7 @@ public class SingBoxOptions {
         public Boolean udp_fragment;
 
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -3546,11 +3549,11 @@ public class SingBoxOptions {
 
         public String congestion_control;
 
-        public Long auth_timeout;
+        public String auth_timeout;
 
         public Boolean zero_rtt_handshake;
 
-        public Long heartbeat;
+        public String heartbeat;
 
         public InboundTLSOptions tls;
 
@@ -3570,7 +3573,7 @@ public class SingBoxOptions {
         public Boolean udp_fragment;
 
 
-        public Long udp_timeout;
+        public Object udp_timeout;
 
         public Boolean proxy_protocol;
 
@@ -3624,7 +3627,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -3635,7 +3638,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -3664,7 +3667,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -3675,7 +3678,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -3715,7 +3718,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -3726,7 +3729,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -3766,7 +3769,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -3777,7 +3780,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -3821,7 +3824,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -3832,7 +3835,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -3882,7 +3885,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -3893,7 +3896,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -3933,7 +3936,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -3944,7 +3947,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -3998,7 +4001,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -4009,7 +4012,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -4073,7 +4076,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -4084,7 +4087,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -4115,7 +4118,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -4126,7 +4129,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -4178,7 +4181,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -4189,7 +4192,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -4225,7 +4228,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -4236,7 +4239,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -4280,7 +4283,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -4291,7 +4294,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -4335,7 +4338,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -4346,7 +4349,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -4394,7 +4397,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -4405,7 +4408,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 
@@ -4465,7 +4468,7 @@ public class SingBoxOptions {
 
         public String url;
 
-        public Long interval;
+        public String interval;
 
         public Integer tolerance;
 
@@ -4645,9 +4648,9 @@ public class SingBoxOptions {
 
         public Map<String, String> headers;
 
-        public Long idle_timeout;
+        public String idle_timeout;
 
-        public Long ping_timeout;
+        public String ping_timeout;
 
     }
 
@@ -4668,9 +4671,9 @@ public class SingBoxOptions {
 
         public String service_name;
 
-        public Long idle_timeout;
+        public String idle_timeout;
 
-        public Long ping_timeout;
+        public String ping_timeout;
 
         public Boolean permit_without_stream;
 
@@ -4774,7 +4777,7 @@ public class SingBoxOptions {
 
         public Boolean reuse_addr;
 
-        public Long connect_timeout;
+        public String connect_timeout;
 
         public Boolean tcp_fast_open;
 
@@ -4785,7 +4788,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Long fallback_delay;
+        public String fallback_delay;
 
         // End of public DialerOptions ;
 

@@ -51,6 +51,14 @@ Duration units are preserved across formats: Clash AnyTLS numeric session
 intervals are seconds, while TUIC `heartbeat-interval` is milliseconds. Native
 sing-box duration fields are emitted as strings with units.
 
+Typed configuration models also retain units for dialer timeouts/fallbacks,
+HTTP/gRPC idle and ping timeouts, TUIC heartbeats and NTP/URL-test intervals.
+Unset fields stay absent; explicit `"0s"` and `false` are preserved. Inbound/TUN
+`udp_timeout` accepts both legacy integer seconds and duration strings, matching
+the core's `UDPTimeoutCompat`. Nested custom JSON can clear a value with `null`
+while retaining sibling settings. Advanced native fields remain on the existing
+raw JSON/import/storage/share path.
+
 Typed sing-box JSON is recognized before legacy JSON heuristics, so Hysteria2
 with `up_mbps` or only `server_ports` is preserved as a native custom outbound
 instead of being misclassified as a Hysteria1 profile.
@@ -73,6 +81,11 @@ paths, variant-specific generated JSON, link round trips and duration/port
 conversion. Set `SEKAIMOD_PROTOCOL_FIXTURE` to export its generated configurations.
 `TestGeneratedProtocol14Configurations` in libcore consumes that file through
 `CheckSingBoxConfig`, exercising the real Android protocol registry and core.
+
+`ConfigModel14Test` checks typed duration serialization, nullable overrides and
+native JSON persistence/universal-share payloads. Set `SEKAIMOD_CONFIG14_FIXTURE`
+to export complete configurations; `TestGeneratedConfigModel14Configurations`
+checks both accepted and rejected cases using the pinned Android registry.
 
 `TestSnellAndroidOutboundInterop` exercises v4 (`none`/`http`/`tls`) and all three
 v6 modes, both with and without connection reuse, using loopback
