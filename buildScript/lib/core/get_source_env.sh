@@ -1,12 +1,14 @@
 # sing-box mod 1.14.x line, which carries:
 #   - Upstream stable@8dbc70be (post-v1.14.4 maintenance), with scoped
 #     lifecycle cleanup and resolver-aware ECH for upload/download TLS.
-#   - sing-tun lwip@ff0e245 plus sing/dev@9b11dbe; Go remains the default.
+#   - sing-tun lwip@8911c47 plus sing/dev@9b11dbe; Go remains the default.
 #   - Go userspace TUN stack as the default, with optional static-CGO lwIP;
 #     system, gVisor and mixed remain selectable. Native dependencies are
 #     pinned together with the sing-tun integration in libcore/go.mod.
 #   - Cronet Chromium 154.0.8037.49, Chrome Root Store v45 and root-derived
-#     Trust Anchor IDs; sing-lwip includes the pinned fragment reassembly fixes.
+#     Trust Anchor IDs.
+#   - sing-lwip wrapper 35273e959645 and native f242056c4121 pin lwIP b69a0c1,
+#     with UDP backpressure/quota, GSO retransmission and fragment reliability fixes.
 #   - Cronet wrapper/native c67c5dc12708 and all ffdf7fe53517 include selective
 #     async socket scheduling, Naive resolver/reset, C-header initialization,
 #     BSD UDP EOF and Windows TCP metrics fixes from the maintained native fork.
@@ -55,5 +57,5 @@
 #     platform.Interface) re-applied; oomprofile parses /proc/self/maps
 #     locally instead of linkname'ing runtime/pprof internals (Go 1.26
 #     rejects pull-mode linkname); CI follows the fork's 1.13.x workflows.
-export COMMIT_SING_BOX="20941640859915d5eef43469944e4e0c19ef535b"
+export COMMIT_SING_BOX="62f36c66def17a1214982287587633e97cd1d8ea"
 export COMMIT_LIBNEKO="1c47a3af71990a7b2192e03292b4d246c308ef0b"
